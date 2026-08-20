@@ -197,7 +197,7 @@ export default function Home() {
         {/* Hero Artwork Ribbon */}
         <div className="hero-art" aria-hidden="true">
           <Image
-            src="/images/domain-thread-hero-transparent.png"
+            src="/images/scrape-hero-ribbon.jpg"
             alt=""
             width={1942}
             height={809}
