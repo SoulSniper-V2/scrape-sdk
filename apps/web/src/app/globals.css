@@ -12,6 +12,75 @@
   --home-blue: #7ba2ff;
 }
 
+body {
+  background: #090908;
+  color: #f4f3ef;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.font-editorial {
+  font-family: "Iowan Old Style", Baskerville, "Times New Roman", Georgia, serif;
+}
+
+.hero-art {
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+.hero-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+}
+
+.hero-art::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  height: 90px;
+  background: linear-gradient(to bottom, #090908 0%, transparent 100%);
+  content: "";
+}
+
+.hero-art::after {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  height: 60px;
+  background: linear-gradient(to top, #090908 0%, transparent 100%);
+  content: "";
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex !important;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Fumadocs documentation shell tokens */
 .domain-docs-shell {
   --color-fd-background: #090908;
   --color-fd-foreground: #f1efe8;
@@ -33,10 +102,6 @@
   background: #090908;
   color: #f1efe8;
   color-scheme: dark;
-}
-
-.font-editorial {
-  font-family: "Iowan Old Style", Baskerville, "Times New Roman", Georgia, serif;
 }
 
 .domain-docs-shell article h1 {
