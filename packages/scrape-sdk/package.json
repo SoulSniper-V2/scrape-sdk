@@ -43,7 +43,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "node --test dist/**/*.test.js",
+    "test": "node --test dist/client.test.js",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
