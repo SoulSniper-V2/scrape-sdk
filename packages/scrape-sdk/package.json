@@ -10,35 +10,51 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./firecrawl": {
       "types": "./dist/adapters/firecrawl.d.ts",
-      "import": "./dist/adapters/firecrawl.js"
+      "import": "./dist/adapters/firecrawl.js",
+      "require": "./dist/adapters/firecrawl.js",
+      "default": "./dist/adapters/firecrawl.js"
     },
     "./jina": {
       "types": "./dist/adapters/jina.d.ts",
-      "import": "./dist/adapters/jina.js"
+      "import": "./dist/adapters/jina.js",
+      "require": "./dist/adapters/jina.js",
+      "default": "./dist/adapters/jina.js"
     },
     "./tavily": {
       "types": "./dist/adapters/tavily.d.ts",
-      "import": "./dist/adapters/tavily.js"
+      "import": "./dist/adapters/tavily.js",
+      "require": "./dist/adapters/tavily.js",
+      "default": "./dist/adapters/tavily.js"
     },
     "./spider": {
       "types": "./dist/adapters/spider.d.ts",
-      "import": "./dist/adapters/spider.js"
+      "import": "./dist/adapters/spider.js",
+      "require": "./dist/adapters/spider.js",
+      "default": "./dist/adapters/spider.js"
     },
     "./browserbase": {
       "types": "./dist/adapters/browserbase.d.ts",
-      "import": "./dist/adapters/browserbase.js"
+      "import": "./dist/adapters/browserbase.js",
+      "require": "./dist/adapters/browserbase.js",
+      "default": "./dist/adapters/browserbase.js"
     },
     "./local": {
       "types": "./dist/adapters/local.d.ts",
-      "import": "./dist/adapters/local.js"
+      "import": "./dist/adapters/local.js",
+      "require": "./dist/adapters/local.js",
+      "default": "./dist/adapters/local.js"
     },
     "./ai": {
       "types": "./dist/ai/index.d.ts",
-      "import": "./dist/ai/index.js"
+      "import": "./dist/ai/index.js",
+      "require": "./dist/ai/index.js",
+      "default": "./dist/ai/index.js"
     }
   },
   "scripts": {

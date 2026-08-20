@@ -6,12 +6,12 @@ import * as __fd_glob_19 from "../content/docs/providers/jina.mdx?collection=doc
 import * as __fd_glob_18 from "../content/docs/providers/index.mdx?collection=docs"
 import * as __fd_glob_17 from "../content/docs/providers/firecrawl.mdx?collection=docs"
 import * as __fd_glob_16 from "../content/docs/providers/browserbase.mdx?collection=docs"
-import * as __fd_glob_15 from "../content/docs/guides/vercel-ai-sdk.mdx?collection=docs"
-import * as __fd_glob_14 from "../content/docs/guides/offline-testing.mdx?collection=docs"
-import * as __fd_glob_13 from "../content/docs/guides/model-context-protocol.mdx?collection=docs"
-import * as __fd_glob_12 from "../content/docs/concepts/markdown-pipeline.mdx?collection=docs"
-import * as __fd_glob_11 from "../content/docs/concepts/failover-matrix.mdx?collection=docs"
-import * as __fd_glob_10 from "../content/docs/concepts/error-handling.mdx?collection=docs"
+import * as __fd_glob_15 from "../content/docs/concepts/markdown-pipeline.mdx?collection=docs"
+import * as __fd_glob_14 from "../content/docs/concepts/failover-matrix.mdx?collection=docs"
+import * as __fd_glob_13 from "../content/docs/concepts/error-handling.mdx?collection=docs"
+import * as __fd_glob_12 from "../content/docs/guides/vercel-ai-sdk.mdx?collection=docs"
+import * as __fd_glob_11 from "../content/docs/guides/offline-testing.mdx?collection=docs"
+import * as __fd_glob_10 from "../content/docs/guides/model-context-protocol.mdx?collection=docs"
 import * as __fd_glob_9 from "../content/docs/api-reference/create-scrape-client.mdx?collection=docs"
 import * as __fd_glob_8 from "../content/docs/quickstart.mdx?collection=docs"
 import * as __fd_glob_7 from "../content/docs/installation.mdx?collection=docs"
@@ -30,4 +30,4 @@ const create = server<typeof Config, import("fumadocs-mdx/runtime/types").Intern
   }
 }>();
 
-export const docs = await create.docs("docs", "content/docs", {"meta.json": __fd_glob_0, "api-reference/meta.json": __fd_glob_1, "concepts/meta.json": __fd_glob_2, "guides/meta.json": __fd_glob_3, "providers/meta.json": __fd_glob_4, }, {"how-it-works.mdx": __fd_glob_5, "index.mdx": __fd_glob_6, "installation.mdx": __fd_glob_7, "quickstart.mdx": __fd_glob_8, "api-reference/create-scrape-client.mdx": __fd_glob_9, "concepts/error-handling.mdx": __fd_glob_10, "concepts/failover-matrix.mdx": __fd_glob_11, "concepts/markdown-pipeline.mdx": __fd_glob_12, "guides/model-context-protocol.mdx": __fd_glob_13, "guides/offline-testing.mdx": __fd_glob_14, "guides/vercel-ai-sdk.mdx": __fd_glob_15, "providers/browserbase.mdx": __fd_glob_16, "providers/firecrawl.mdx": __fd_glob_17, "providers/index.mdx": __fd_glob_18, "providers/jina.mdx": __fd_glob_19, "providers/local.mdx": __fd_glob_20, "providers/spider.mdx": __fd_glob_21, "providers/tavily.mdx": __fd_glob_22, });
+export const docs = await create.docs("docs", "content/docs", {"meta.json": __fd_glob_0, "api-reference/meta.json": __fd_glob_1, "concepts/meta.json": __fd_glob_2, "guides/meta.json": __fd_glob_3, "providers/meta.json": __fd_glob_4, }, {"how-it-works.mdx": __fd_glob_5, "index.mdx": __fd_glob_6, "installation.mdx": __fd_glob_7, "quickstart.mdx": __fd_glob_8, "api-reference/create-scrape-client.mdx": __fd_glob_9, "guides/model-context-protocol.mdx": __fd_glob_10, "guides/offline-testing.mdx": __fd_glob_11, "guides/vercel-ai-sdk.mdx": __fd_glob_12, "concepts/error-handling.mdx": __fd_glob_13, "concepts/failover-matrix.mdx": __fd_glob_14, "concepts/markdown-pipeline.mdx": __fd_glob_15, "providers/browserbase.mdx": __fd_glob_16, "providers/firecrawl.mdx": __fd_glob_17, "providers/index.mdx": __fd_glob_18, "providers/jina.mdx": __fd_glob_19, "providers/local.mdx": __fd_glob_20, "providers/spider.mdx": __fd_glob_21, "providers/tavily.mdx": __fd_glob_22, });
