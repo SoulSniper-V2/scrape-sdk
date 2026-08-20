@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ScrapeLogo } from '@/components/scrape-logo';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { 
   ArrowUpRight, 
   Copy, 
@@ -17,18 +19,21 @@ import {
   Globe, 
   CheckCircle2, 
   AlertCircle,
-  Code2,
-  Cpu,
   Bot
 } from 'lucide-react';
+import { ScrapeLogo } from '@/components/scrape-logo';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(useGSAP, ScrollTrigger);
+}
 
 const PROVIDERS = [
-  { id: 'firecrawl', name: 'Firecrawl', href: '/docs/providers#firecrawl', desc: 'Full JavaScript rendering & deep crawling' },
-  { id: 'jina', name: 'Jina Reader', href: '/docs/providers#jina', desc: 'Instant markdown extraction via r.jina.ai' },
-  { id: 'tavily', name: 'Tavily Extract', href: '/docs/providers#tavily', desc: 'Agent search & raw content synthesis' },
-  { id: 'spider', name: 'Spider.cloud', href: '/docs/providers#spider', desc: 'Ultra-fast batch crawling engine' },
-  { id: 'browserbase', name: 'Browserbase', href: '/docs/providers#browserbase', desc: 'Headless cloud browser sessions' },
-  { id: 'local', name: 'Local Cheerio', href: '/docs/providers#local', desc: 'Zero-token static HTML to markdown parser' },
+  { id: 'firecrawl', name: 'Firecrawl', href: '/docs/providers#firecrawl' },
+  { id: 'jina', name: 'Jina Reader', href: '/docs/providers#jina' },
+  { id: 'tavily', name: 'Tavily Extract', href: '/docs/providers#tavily' },
+  { id: 'spider', name: 'Spider.cloud', href: '/docs/providers#spider' },
+  { id: 'browserbase', name: 'Browserbase', href: '/docs/providers#browserbase' },
+  { id: 'local', name: 'Local Cheerio', href: '/docs/providers#local' },
 ];
 
 const CODE_EXAMPLES = {
@@ -81,13 +86,14 @@ console.log(text);`,
 }`,
 
   cli: `# Instant CLI extraction
-npx scrape-sdk https://news.ycombinator.com
+bunx scrape-sdk https://news.ycombinator.com
 
 # Pipe clean web markdown into an LLM or clipboard
-npx scrape-sdk https://stripe.com | pbcopy`,
+bunx scrape-sdk https://stripe.com | pbcopy`,
 };
 
 export default function Home() {
+  const root = useRef<HTMLElement>(null);
   const [url, setUrl] = useState('https://news.ycombinator.com');
   const [provider, setProvider] = useState('jina');
   const [loading, setLoading] = useState(false);
@@ -96,6 +102,51 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'quickstart' | 'ai' | 'mcp' | 'cli'>('quickstart');
   const [codeCopied, setCodeCopied] = useState(false);
+
+  useGSAP(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    // 1. Hero load-in timeline
+    const intro = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    intro
+      .from('.home-nav', { y: -20, opacity: 0, duration: 0.7 })
+      .from('.hero-reveal', { y: 40, opacity: 0, duration: 0.9, stagger: 0.12 }, '-=0.4')
+      .from('.hero-art', { scale: 0.92, opacity: 0, y: 30, duration: 1.2 }, '-=0.6');
+
+    // 2. Manifesto Word-by-Word Scroll Reveal
+    const words = gsap.utils.toArray<HTMLElement>('.manifesto-word');
+    if (words.length > 0) {
+      gsap.set(words, { opacity: 0.18 });
+      const wordTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.manifesto-section',
+          start: 'top 75%',
+          end: 'bottom 45%',
+          scrub: 0.8,
+        },
+      });
+      words.forEach((word, index) => {
+        wordTimeline.to(word, { opacity: 1, duration: 0.15 }, index * 0.08);
+      });
+    }
+
+    // 3. Architecture Visual Scale on Scroll
+    gsap.fromTo(
+      '.architecture-visual',
+      { scale: 0.88, opacity: 0.35 },
+      {
+        scale: 1,
+        opacity: 1,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.architecture-section',
+          start: 'top 80%',
+          end: 'center 50%',
+          scrub: 1,
+        },
+      }
+    );
+  }, { scope: root });
 
   const handleScrape = async (targetUrl = url, targetProvider = provider) => {
     setLoading(true);
@@ -128,15 +179,15 @@ export default function Home() {
     setTimeout(() => setCodeCopied(false), 2000);
   };
 
+  const manifestoText = "Scrape the URL. Return the exact markdown. Fallback before the agent fails.";
+
   return (
-    <main className="min-h-screen bg-[#090908] text-[#f4f3ef] antialiased selection:bg-[#7ba2ff]/20 selection:text-[#7ba2ff]">
+    <main ref={root} className="min-h-screen bg-[#090908] text-[#f4f3ef] antialiased selection:bg-[#7ba2ff]/20 selection:text-[#7ba2ff]">
       {/* Navigation */}
-      <nav className="border-b border-[#252522] bg-[#090908]/90 backdrop-blur sticky top-0 z-50">
+      <nav className="home-nav border-b border-[#252522] bg-[#090908]/90 backdrop-blur sticky top-0 z-50">
         <div className="max-w-[1240px] mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <span className="w-7 h-7 rounded bg-[#171715] border border-[#2b2b27] flex items-center justify-center font-mono text-xs font-bold text-[#f1efe8]">
-              ⚡
-            </span>
+            <ScrapeLogo className="w-8 h-8" />
             <span className="font-medium text-sm text-[#f4f3ef] tracking-tight">Scrape SDK</span>
           </Link>
           <div className="flex items-center gap-6 text-[13px] text-[#999890]">
@@ -165,17 +216,17 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pt-24 pb-28 px-6 text-center max-w-[1240px] mx-auto overflow-hidden">
         <div className="relative z-10">
-          <h1 className="font-editorial text-[clamp(3.8rem,8vw,8rem)] font-normal leading-[0.9] tracking-[-0.065em] text-[#f4f3ef] max-w-4xl mx-auto">
+          <h1 className="hero-reveal font-editorial text-[clamp(3.8rem,8vw,8rem)] font-normal leading-[0.9] tracking-[-0.065em] text-[#f4f3ef] max-w-4xl mx-auto">
             <span>Web scraping,</span>
             <br />
             <span>handled.</span>
           </h1>
 
-          <p className="mt-8 max-w-[620px] mx-auto text-[#aaa9a2] text-[clamp(1rem,1.4vw,1.18rem)] leading-[1.65] tracking-[-0.018em]">
+          <p className="hero-reveal mt-8 max-w-[620px] mx-auto text-[#aaa9a2] text-[clamp(1rem,1.4vw,1.18rem)] leading-[1.65] tracking-[-0.018em]">
             Add, crawl, extract, and convert web pages to clean markdown across all providers with one TypeScript API.
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <div className="hero-reveal mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/docs/installation"
               className="inline-flex min-h-[48px] items-center justify-center gap-2 px-6 rounded bg-[#f4f3ef] text-[#0a0a09] font-medium text-[13px] hover:translate-y-[-1px] transition-transform shadow-lg"
@@ -184,11 +235,11 @@ export default function Home() {
               <ArrowUpRight className="w-4 h-4" />
             </Link>
             <button
-              onClick={() => copyCommand('npm i scrape-sdk')}
+              onClick={() => copyCommand('bun add scrape-sdk')}
               className="inline-flex min-h-[48px] items-center justify-center gap-3 px-5 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-mono text-[12px] hover:translate-y-[-1px] transition-transform"
             >
               <span className="text-[#7ba2ff]">$</span>
-              <code>npm i scrape-sdk</code>
+              <code>bun add scrape-sdk</code>
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#77766f]" />}
             </button>
           </div>
@@ -198,9 +249,9 @@ export default function Home() {
         <div className="hero-art" aria-hidden="true">
           <Image
             src="/images/scrape-hero-ribbon.jpg"
-            alt=""
-            width={1942}
-            height={809}
+            alt="Scrape SDK Hero Ribbon"
+            width={1920}
+            height={1080}
             priority
             unoptimized
           />
@@ -219,10 +270,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Manifesto Section */}
-      <section className="py-28 px-6 max-w-[1160px] mx-auto">
+      {/* Manifesto Section with Word-by-Word Scroll Scrub */}
+      <section className="manifesto-section py-28 px-6 max-w-[1160px] mx-auto">
         <p className="font-editorial text-[clamp(2.6rem,5vw,4.8rem)] leading-[1.04] tracking-[-0.052em] text-[#f1efe8]">
-          Scrape the URL. Return the exact markdown. Fallback before the agent fails.
+          {manifestoText.split(' ').map((word, idx) => (
+            <span key={idx} className="manifesto-word inline-block mr-[0.28em]">
+              {word}
+            </span>
+          ))}
         </p>
       </section>
 
@@ -344,7 +399,7 @@ const result = await scraper.scrape("https://stripe.com", {
       </section>
 
       {/* Architecture Diagram Section */}
-      <section className="max-w-[1240px] mx-auto px-6 pb-28">
+      <section className="architecture-section max-w-[1240px] mx-auto px-6 pb-28">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-5 space-y-4">
             <h2 className="font-editorial text-[clamp(2.4rem,4vw,3.8rem)] leading-[0.98] tracking-[-0.05em] text-[#f4f3ef]">
@@ -358,7 +413,7 @@ const result = await scraper.scrape("https://stripe.com", {
             </Link>
           </div>
 
-          <div className="lg:col-span-7 bg-[#11110f] border border-[#2b2b27] rounded p-6">
+          <div className="architecture-visual lg:col-span-7 bg-[#11110f] border border-[#2b2b27] rounded p-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="w-full md:w-auto p-4 rounded bg-[#171715] border border-[#2b2b27] flex items-center gap-3">
                 <Bot className="w-5 h-5 text-[#7ba2ff]" />
@@ -373,7 +428,7 @@ const result = await scraper.scrape("https://stripe.com", {
               </div>
 
               <div className="w-full md:w-auto p-4 rounded bg-[#171715] border border-[#7ba2ff]/40 shadow-lg shadow-[#7ba2ff]/5 flex items-center gap-3">
-                <Zap className="w-5 h-5 text-[#7ba2ff]" />
+                <ScrapeLogo className="w-6 h-6" />
                 <div>
                   <span className="text-xs font-semibold text-white block">Scrape SDK</span>
                   <span className="text-[11px] text-[#8f8e87]">one typed contract</span>
@@ -613,7 +668,8 @@ const result = await scraper.scrape("https://stripe.com", {
       {/* Footer */}
       <footer className="border-t border-[#252522] py-12 px-6 max-w-[1240px] mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-[#8f8e87] gap-4">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-2"><ScrapeLogo className="w-4 h-4" /> Scrape SDK</span>
+          <ScrapeLogo className="w-4 h-4" />
+          <span>Scrape SDK</span>
           <span>— Open source, MIT licensed</span>
         </div>
         <div className="flex items-center gap-6">
