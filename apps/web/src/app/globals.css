@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --home-bg: #090908;
+  --home-surface: #11110f;
+  --home-surface-strong: #171715;
+  --home-border: #2b2b27;
+  --home-muted: #a09f97;
+  --home-paper: #f1efe8;
+  --home-blue: #7ba2ff;
+}
+
 body {
+  background: #090908;
+  color: #f4f3ef;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.font-editorial {
+  font-family: "Iowan Old Style", Baskerville, "Times New Roman", Georgia, serif;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 24s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
 }
