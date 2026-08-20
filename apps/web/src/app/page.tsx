@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ScrapeLogo } from '@/components/scrape-logo';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
@@ -612,7 +613,7 @@ const result = await scraper.scrape("https://stripe.com", {
       {/* Footer */}
       <footer className="border-t border-[#252522] py-12 px-6 max-w-[1240px] mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-[#8f8e87] gap-4">
         <div className="flex items-center gap-2">
-          <span>⚡ Scrape SDK</span>
+          <span className="inline-flex items-center gap-2"><ScrapeLogo className="w-4 h-4" /> Scrape SDK</span>
           <span>— Open source, MIT licensed</span>
         </div>
         <div className="flex items-center gap-6">

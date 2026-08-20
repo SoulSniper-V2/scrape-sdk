@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { ScrapeLogo } from '@/components/scrape-logo';
 import { ArrowUpRight } from 'lucide-react';
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
@@ -8,7 +9,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
       <nav className="border-b border-[#252522] bg-[#090908]/90 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 font-medium text-sm">
-            <span className="w-6 h-6 rounded bg-[#171715] border border-[#2b2b27] flex items-center justify-center font-mono text-xs">⚡</span>
+            <ScrapeLogo className="w-6 h-6" />
             <span>Scrape SDK Docs</span>
           </Link>
           <div className="flex items-center gap-4 text-xs text-[#999890]">

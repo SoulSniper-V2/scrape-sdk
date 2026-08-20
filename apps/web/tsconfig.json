@@ -21,7 +21,12 @@
         "name": "next"
       }
     ],
-    "target": "ES2022"
+    "target": "ES2022",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
   "include": [
     "next-env.d.ts",
