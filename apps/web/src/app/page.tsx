@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { 
   ArrowUpRight, 
   Copy, 
@@ -13,16 +15,19 @@ import {
   Layers, 
   Globe, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  Code2,
+  Cpu,
+  Bot
 } from 'lucide-react';
 
 const PROVIDERS = [
-  { id: 'firecrawl', name: 'Firecrawl', desc: 'Full JavaScript rendering & deep crawling' },
-  { id: 'jina', name: 'Jina Reader', desc: 'Instant markdown extraction via r.jina.ai' },
-  { id: 'tavily', name: 'Tavily Extract', desc: 'Agent search & raw content synthesis' },
-  { id: 'spider', name: 'Spider.cloud', desc: 'Ultra-fast batch crawling engine' },
-  { id: 'browserbase', name: 'Browserbase', desc: 'Headless cloud browser sessions' },
-  { id: 'local', name: 'Local Cheerio', desc: 'Zero-token static HTML to markdown parser' },
+  { id: 'firecrawl', name: 'Firecrawl', href: '/docs/providers#firecrawl', desc: 'Full JavaScript rendering & deep crawling' },
+  { id: 'jina', name: 'Jina Reader', href: '/docs/providers#jina', desc: 'Instant markdown extraction via r.jina.ai' },
+  { id: 'tavily', name: 'Tavily Extract', href: '/docs/providers#tavily', desc: 'Agent search & raw content synthesis' },
+  { id: 'spider', name: 'Spider.cloud', href: '/docs/providers#spider', desc: 'Ultra-fast batch crawling engine' },
+  { id: 'browserbase', name: 'Browserbase', href: '/docs/providers#browserbase', desc: 'Headless cloud browser sessions' },
+  { id: 'local', name: 'Local Cheerio', href: '/docs/providers#local', desc: 'Zero-token static HTML to markdown parser' },
 ];
 
 const CODE_EXAMPLES = {
@@ -33,7 +38,7 @@ import { jina } from "scrape-sdk/jina";
 // Initialize client with automatic failover
 const scraper = createScrapeClient({
   provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
-  fallback: jina(), // Shifts to Jina if primary rate-limits
+  fallback: jina(), // shifts on 429 rate limit
 });
 
 const result = await scraper.scrape("https://stripe.com", {
@@ -58,7 +63,7 @@ const { text } = await generateText({
   tools: {
     scrape: scrapeTool(scraper),
   },
-  prompt: "Summarize the key features from https://news.ycombinator.com",
+  prompt: "Summarize top stories from https://news.ycombinator.com",
 });
 
 console.log(text);`,
@@ -72,19 +77,13 @@ console.log(text);`,
       "args": ["-y", "scrape-sdk-mcp"]
     }
   }
-}
-
-// Available tool:
-// - scrape_web({ url: string, format?: "markdown" | "html" | "text" })`,
+}`,
 
   cli: `# Instant CLI extraction
 npx scrape-sdk https://news.ycombinator.com
 
 # Pipe clean web markdown into an LLM or clipboard
-npx scrape-sdk https://stripe.com | pbcopy
-
-# Extract structured JSON
-npx scrape-sdk https://github.com/trending --json`,
+npx scrape-sdk https://stripe.com | pbcopy`,
 };
 
 export default function Home() {
@@ -133,61 +132,77 @@ export default function Home() {
       {/* Navigation */}
       <nav className="border-b border-[#252522] bg-[#090908]/90 backdrop-blur sticky top-0 z-50">
         <div className="max-w-[1240px] mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <span className="w-7 h-7 rounded bg-[#171715] border border-[#2b2b27] flex items-center justify-center font-mono text-xs font-bold text-[#f1efe8]">
               ⚡
             </span>
             <span className="font-medium text-sm text-[#f4f3ef] tracking-tight">Scrape SDK</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-6 text-[13px] text-[#999890]">
-            <a href="https://www.npmjs.com/package/scrape-sdk" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
-              npm v0.1.3
-            </a>
+            <Link href="/docs" className="hover:text-white transition-colors">
+              Docs
+            </Link>
+            <Link href="/docs/providers" className="hover:text-white transition-colors">
+              Providers
+            </Link>
+            <Link href="/docs/installation" className="hover:text-white transition-colors">
+              Installation
+            </Link>
             <a href="https://github.com/SoulSniper-V2/scrape-sdk" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">
               GitHub <ArrowUpRight className="w-3 h-3" />
             </a>
-            <a 
-              href="https://github.com/SoulSniper-V2/scrape-sdk#quickstart" 
-              target="_blank" 
-              rel="noreferrer" 
+            <Link 
+              href="/docs" 
               className="px-3.5 py-1.5 rounded border border-[#3b3b37] text-white hover:bg-[#f1efe8] hover:text-[#090908] transition-all font-medium"
             >
               Get started
-            </a>
+            </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section (OpenCore Editorial Typography) */}
-      <section className="pt-24 pb-20 px-6 text-center max-w-[1240px] mx-auto">
-        <h1 className="font-editorial text-[clamp(3.5rem,7.5vw,7.5rem)] font-normal leading-[0.92] tracking-[-0.06em] text-[#f4f3ef] max-w-4xl mx-auto">
-          <span>Web scraping,</span>
-          <br />
-          <span>handled.</span>
-        </h1>
+      {/* Hero Section */}
+      <section className="relative pt-24 pb-28 px-6 text-center max-w-[1240px] mx-auto overflow-hidden">
+        <div className="relative z-10">
+          <h1 className="font-editorial text-[clamp(3.8rem,8vw,8rem)] font-normal leading-[0.9] tracking-[-0.065em] text-[#f4f3ef] max-w-4xl mx-auto">
+            <span>Web scraping,</span>
+            <br />
+            <span>handled.</span>
+          </h1>
 
-        <p className="mt-8 max-w-[620px] mx-auto text-[#aaa9a2] text-[clamp(1rem,1.4vw,1.15rem)] leading-[1.65] tracking-[-0.015em]">
-          Scrape, crawl, and extract clean markdown across Firecrawl, Jina, Tavily, and Local Cheerio with one TypeScript API.
-        </p>
+          <p className="mt-8 max-w-[620px] mx-auto text-[#aaa9a2] text-[clamp(1rem,1.4vw,1.18rem)] leading-[1.65] tracking-[-0.018em]">
+            Add, crawl, extract, and convert web pages to clean markdown across all providers with one TypeScript API.
+          </p>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <a
-            href="https://github.com/SoulSniper-V2/scrape-sdk"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex min-h-[48px] items-center justify-center gap-2 px-6 rounded bg-[#f4f3ef] text-[#0a0a09] font-medium text-[13px] hover:translate-y-[-1px] transition-transform shadow-lg"
-          >
-            <span>Install Scrape SDK</span>
-            <ArrowUpRight className="w-4 h-4" />
-          </a>
-          <button
-            onClick={() => copyCommand('npm i scrape-sdk')}
-            className="inline-flex min-h-[48px] items-center justify-center gap-3 px-5 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-mono text-[12px] hover:translate-y-[-1px] transition-transform"
-          >
-            <span className="text-[#7ba2ff]">$</span>
-            <code>npm i scrape-sdk</code>
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#77766f]" />}
-          </button>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/docs/installation"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 px-6 rounded bg-[#f4f3ef] text-[#0a0a09] font-medium text-[13px] hover:translate-y-[-1px] transition-transform shadow-lg"
+            >
+              <span>Install Scrape SDK</span>
+              <ArrowUpRight className="w-4 h-4" />
+            </Link>
+            <button
+              onClick={() => copyCommand('npm i scrape-sdk')}
+              className="inline-flex min-h-[48px] items-center justify-center gap-3 px-5 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-mono text-[12px] hover:translate-y-[-1px] transition-transform"
+            >
+              <span className="text-[#7ba2ff]">$</span>
+              <code>npm i scrape-sdk</code>
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#77766f]" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Hero Artwork Ribbon */}
+        <div className="hero-art" aria-hidden="true">
+          <Image
+            src="/images/domain-thread-hero-transparent.png"
+            alt=""
+            width={1942}
+            height={809}
+            priority
+            unoptimized
+          />
         </div>
       </section>
 
@@ -195,30 +210,34 @@ export default function Home() {
       <section className="border-y border-[#2b2b27] bg-[#090908] overflow-hidden py-0">
         <div className="animate-marquee">
           {[...PROVIDERS, ...PROVIDERS, ...PROVIDERS].map((p, idx) => (
-            <div key={`${p.id}-${idx}`} className="flex items-center gap-3 px-12 py-5 border-r border-[#2b2b27] text-[13px] font-medium text-[#c3c1b9] whitespace-nowrap">
+            <Link key={`${p.id}-${idx}`} href={p.href} className="flex items-center gap-3 px-12 py-5 border-r border-[#2b2b27] text-[13px] font-medium text-[#c3c1b9] hover:bg-[#131311] hover:text-white transition-colors whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-[#7ba2ff]/60" />
               <span>{p.name}</span>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* Manifesto Quote */}
+      {/* Manifesto Section */}
       <section className="py-28 px-6 max-w-[1160px] mx-auto">
-        <p className="font-editorial text-[clamp(2.5rem,4.8vw,4.6rem)] leading-[1.06] tracking-[-0.045em] text-[#f1efe8]">
-          Scrape the URL. Extract the clean markdown. Fallback before failing.
+        <p className="font-editorial text-[clamp(2.6rem,5vw,4.8rem)] leading-[1.04] tracking-[-0.052em] text-[#f1efe8]">
+          Scrape the URL. Return the exact markdown. Fallback before the agent fails.
         </p>
       </section>
 
       {/* Bento Capability Grid */}
       <section className="max-w-[1240px] mx-auto px-6 pb-28">
-        <div className="mb-14">
-          <h2 className="font-editorial text-[clamp(2.5rem,4.2vw,4.2rem)] leading-[1.0] tracking-[-0.05em] text-[#f4f3ef]">
-            Everything your agent pipeline needs. One API.
-          </h2>
-          <p className="mt-4 text-[#a09f97] text-[15px] max-w-xl">
-            Scrape SDK keeps provider-specific quirks at the edge and returns a normalized markdown model your LLM can read directly.
-          </p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-14">
+          <div className="lg:col-span-8">
+            <h2 className="font-editorial text-[clamp(2.6rem,4.4vw,4.4rem)] leading-[0.98] tracking-[-0.055em] text-[#f4f3ef]">
+              Everything your scraping flow needs. One API.
+            </h2>
+          </div>
+          <div className="lg:col-span-4">
+            <p className="text-[#a09f97] text-[15px] leading-[1.7]">
+              Scrape SDK keeps platform-specific APIs at the edge of your system and returns a clean markdown model your agent can consume directly.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-[1px] bg-[#2b2b27] border border-[#2b2b27] overflow-hidden rounded">
@@ -228,14 +247,14 @@ export default function Home() {
               <span>scrape.ts</span>
               <span>TypeScript</span>
             </div>
-            <pre className="p-8 font-mono text-[13px] leading-[1.8] text-[#dedcd4] overflow-x-auto">
+            <pre className="p-8 font-mono text-[13px] leading-[1.85] text-[#dedcd4] overflow-x-auto">
               <code>{`import { createScrapeClient } from "scrape-sdk";
 import { firecrawl } from "scrape-sdk/firecrawl";
 import { jina } from "scrape-sdk/jina";
 
 const scraper = createScrapeClient({
   provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
-  fallback: jina(), // shifts on 429 rate limit
+  fallback: jina(), // shifts on 429 rate limits
 });
 
 const result = await scraper.scrape("https://stripe.com", {
@@ -255,7 +274,7 @@ const result = await scraper.scrape("https://stripe.com", {
                 <code className="text-[#dbd9d1]">stripe.com/pricing</code>
                 <span className="text-[#b8d78e] flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#b8d78e]" />
-                  200 OK
+                  ready
                 </span>
               </div>
               <div className="p-3.5 px-4 flex items-center justify-between text-[#8f8e87]">
@@ -263,16 +282,16 @@ const result = await scraper.scrape("https://stripe.com", {
                 <span className="text-amber-400">429 Rate Limit</span>
               </div>
               <div className="p-3.5 px-4 flex items-center justify-between text-[#8f8e87]">
-                <span>Failover Routing</span>
+                <span>Failover Provider</span>
                 <span className="text-[#7ba2ff]">Jina Reader</span>
               </div>
               <div className="p-3.5 px-4 flex items-center justify-between text-[#8f8e87]">
-                <span>Parsed Tokens</span>
+                <span>Extracted Tokens</span>
                 <span className="text-white font-semibold">1,840 tokens (124ms)</span>
               </div>
             </div>
             <div>
-              <h3 className="text-xl font-normal tracking-[-0.03em] text-[#eceae3]">Honest failover</h3>
+              <h3 className="text-xl font-normal tracking-[-0.035em] text-[#eceae3]">Honest failover</h3>
               <p className="mt-2 text-sm text-[#8f8e87] leading-relaxed">
                 If your primary provider rate-limits or times out, Scrape SDK shifts to fallback providers before your agent crashes.
               </p>
@@ -281,7 +300,7 @@ const result = await scraper.scrape("https://stripe.com", {
 
           {/* Card 3: Adapter Swap */}
           <div className="lg:col-span-4 bg-[#11110f] p-8 flex flex-col justify-between">
-            <h3 className="text-xl font-normal tracking-[-0.03em] text-[#eceae3]">
+            <h3 className="text-xl font-normal tracking-[-0.035em] text-[#eceae3]">
               Change the adapter.<br />Keep the workflow.
             </h3>
             <div className="my-6 p-4 rounded bg-[#0d0d0c] border border-[#2b2b27] flex items-center justify-center gap-3 font-mono text-xs text-[#92b6ff]">
@@ -290,14 +309,17 @@ const result = await scraper.scrape("https://stripe.com", {
               <code>jina()</code>
             </div>
             <p className="text-xs text-[#8f8e87] leading-relaxed">
-              Standardized options across all 6 scraping providers.
+              Standardized options and responses across all 6 scraping providers.
             </p>
           </div>
 
           {/* Card 4: Clean Markdown Extraction */}
           <div className="lg:col-span-8 bg-[#11110f] p-8 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-normal tracking-[-0.03em] text-[#eceae3]">Clean markdown your LLM can trust</h3>
+              <h3 className="text-xl font-normal tracking-[-0.035em] text-[#eceae3]">Clean markdown your UI and agent can trust</h3>
+              <Link href="/docs/providers" className="text-xs text-[#92b6ff] hover:underline flex items-center gap-1">
+                Explore model <ArrowUpRight className="w-3 h-3" />
+              </Link>
             </div>
             <div className="space-y-2 border border-[#2b2b27] bg-[#0d0d0c] p-4 text-xs font-mono divide-y divide-[#1e1e1b]">
               <div className="pb-2 flex justify-between">
@@ -315,6 +337,119 @@ const result = await scraper.scrape("https://stripe.com", {
                 <code className="text-[#dbd9d1]">scripts & styles stripped</code>
                 <span className="text-[#8f8e87]">0 wasted tokens</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Architecture Diagram Section */}
+      <section className="max-w-[1240px] mx-auto px-6 pb-28">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-5 space-y-4">
+            <h2 className="font-editorial text-[clamp(2.4rem,4vw,3.8rem)] leading-[0.98] tracking-[-0.05em] text-[#f4f3ef]">
+              Your complete scraping workflow, already handled.
+            </h2>
+            <p className="text-[#a09f97] text-[15px] leading-relaxed">
+              Your application owns agent logic and orchestration. Scrape SDK talks to configured providers. The provider remains the source of truth.
+            </p>
+            <Link href="/docs/providers" className="inline-flex items-center gap-1.5 text-xs text-[#92b6ff] hover:underline font-medium">
+              Compare providers <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="lg:col-span-7 bg-[#11110f] border border-[#2b2b27] rounded p-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="w-full md:w-auto p-4 rounded bg-[#171715] border border-[#2b2b27] flex items-center gap-3">
+                <Bot className="w-5 h-5 text-[#7ba2ff]" />
+                <div>
+                  <span className="text-xs font-semibold text-white block">Your application</span>
+                  <span className="text-[11px] text-[#8f8e87]">agent rules + LLM prompt</span>
+                </div>
+              </div>
+
+              <div className="hidden md:flex items-center text-[#6f6e68]">
+                <ArrowRight className="w-5 h-5" />
+              </div>
+
+              <div className="w-full md:w-auto p-4 rounded bg-[#171715] border border-[#7ba2ff]/40 shadow-lg shadow-[#7ba2ff]/5 flex items-center gap-3">
+                <Zap className="w-5 h-5 text-[#7ba2ff]" />
+                <div>
+                  <span className="text-xs font-semibold text-white block">Scrape SDK</span>
+                  <span className="text-[11px] text-[#8f8e87]">one typed contract</span>
+                </div>
+              </div>
+
+              <div className="hidden md:flex items-center text-[#6f6e68]">
+                <ArrowRight className="w-5 h-5" />
+              </div>
+
+              <div className="w-full md:w-auto flex flex-col gap-1.5">
+                {['Firecrawl', 'Jina Reader', 'Tavily', 'Local'].map((name) => (
+                  <div key={name} className="px-3 py-1.5 rounded bg-[#171715] border border-[#2b2b27] text-[11px] font-mono text-[#c3c1b9] flex items-center justify-between gap-3">
+                    <span>{name}</span>
+                    <ArrowUpRight className="w-3 h-3 text-[#6f6e68]" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Lifecycle 4-Cards */}
+      <section className="max-w-[1240px] mx-auto px-6 pb-28">
+        <div className="mb-14">
+          <h2 className="font-editorial text-[clamp(2.4rem,4.2vw,4.2rem)] leading-[0.98] tracking-[-0.05em] text-[#f4f3ef]">
+            Everything needed for the lifecycle. Nothing pretending to be magic.
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-6 rounded bg-[#11110f] border border-[#2b2b27] space-y-4">
+            <span className="text-xs font-mono text-[#6f6e68] uppercase tracking-wider block">01 / Add</span>
+            <div className="p-3 rounded bg-[#0d0d0c] border border-[#2b2b27] font-mono text-xs flex justify-between">
+              <code>app.target.com</code>
+              <span className="text-emerald-400">added</span>
+            </div>
+            <div>
+              <h3 className="text-base font-normal text-white">Attach a URL</h3>
+              <p className="text-xs text-[#8f8e87] mt-1 leading-relaxed">Validate once, pass custom headers, and safely execute across configured adapters.</p>
+            </div>
+          </div>
+
+          <div className="p-6 rounded bg-[#11110f] border border-[#2b2b27] space-y-4">
+            <span className="text-xs font-mono text-[#6f6e68] uppercase tracking-wider block">02 / Extract</span>
+            <div className="p-3 rounded bg-[#0d0d0c] border border-[#2b2b27] font-mono text-xs flex justify-between">
+              <b>MARKDOWN</b>
+              <span className="text-[#7ba2ff]">clean ATX</span>
+            </div>
+            <div>
+              <h3 className="text-base font-normal text-white">Return exact markdown</h3>
+              <p className="text-xs text-[#8f8e87] mt-1 leading-relaxed">Strip navigation, styles, and boilerplate. Give your agent token-efficient text.</p>
+            </div>
+          </div>
+
+          <div className="p-6 rounded bg-[#11110f] border border-[#2b2b27] space-y-4">
+            <span className="text-xs font-mono text-[#6f6e68] uppercase tracking-wider block">03 / Failover</span>
+            <div className="p-3 rounded bg-[#0d0d0c] border border-[#2b2b27] font-mono text-xs flex justify-between">
+              <span>Primary 429</span>
+              <span className="text-amber-400">➔ Fallback</span>
+            </div>
+            <div>
+              <h3 className="text-base font-normal text-white">Auto-recover</h3>
+              <p className="text-xs text-[#8f8e87] mt-1 leading-relaxed">Seamlessly route requests to backup providers if rate limits or timeouts occur.</p>
+            </div>
+          </div>
+
+          <div className="p-6 rounded bg-[#11110f] border border-[#2b2b27] space-y-4">
+            <span className="text-xs font-mono text-[#6f6e68] uppercase tracking-wider block">04 / Clean</span>
+            <div className="p-3 rounded bg-[#0d0d0c] border border-[#2b2b27] font-mono text-xs flex justify-between">
+              <code>Local fallback</code>
+              <span className="text-emerald-400">0 tokens</span>
+            </div>
+            <div>
+              <h3 className="text-base font-normal text-white">Zero token waste</h3>
+              <p className="text-xs text-[#8f8e87] mt-1 leading-relaxed">Static Cheerio engine strips HTML clutter without consuming any external tokens.</p>
             </div>
           </div>
         </div>
@@ -448,6 +583,32 @@ const result = await scraper.scrape("https://stripe.com", {
         </div>
       </section>
 
+      {/* Closing CTA */}
+      <section className="py-24 px-6 text-center border-t border-[#252522]">
+        <p className="text-xs font-mono text-[#7ba2ff] uppercase tracking-wider mb-3">Add the URL. Show the markdown. Never fail.</p>
+        <h2 className="font-editorial text-[clamp(2.8rem,5.5vw,5.5rem)] font-normal leading-[1.0] tracking-[-0.055em] text-[#f4f3ef] max-w-3xl mx-auto">
+          Ship web scraping without rebuilding the workflow.
+        </h2>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/docs/installation"
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 px-6 rounded bg-[#f4f3ef] text-[#0a0a09] font-medium text-[13px] hover:translate-y-[-1px] transition-transform"
+          >
+            <span>Start building</span>
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+          <a
+            href="https://github.com/SoulSniper-V2/scrape-sdk"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 px-6 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-medium text-[13px] hover:translate-y-[-1px] transition-transform"
+          >
+            <Github className="w-4 h-4" />
+            <span>View source</span>
+          </a>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-[#252522] py-12 px-6 max-w-[1240px] mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-[#8f8e87] gap-4">
         <div className="flex items-center gap-2">
@@ -455,6 +616,7 @@ const result = await scraper.scrape("https://stripe.com", {
           <span>— Open source, MIT licensed</span>
         </div>
         <div className="flex items-center gap-6">
+          <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
           <a href="https://x.com/be_arsh" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
             Created by @be_arsh
           </a>
