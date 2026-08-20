@@ -1,0 +1,20 @@
+---
+title: Firecrawl Provider
+description: Dynamic single-page application scraping with JavaScript rendering.
+---
+
+## Scope and Credentials
+
+Import the adapter directly from `scrape-sdk/firecrawl`:
+
+```ts title="scraper.ts"
+import { createScrapeClient } from "scrape-sdk";
+import { firecrawl } from "scrape-sdk/firecrawl";
+
+export const scraper = createScrapeClient({
+  provider: firecrawl(),
+});
+
+const result = await scraper.scrape("https://example.com");
+console.log(result.markdown);
+```

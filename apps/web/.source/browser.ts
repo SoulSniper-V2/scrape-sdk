@@ -1,0 +1,12 @@
+// @ts-nocheck
+import { browser } from 'fumadocs-mdx/runtime/browser';
+import type * as Config from '../source.config';
+
+const create = browser<typeof Config, import("fumadocs-mdx/runtime/types").InternalTypeConfig & {
+  DocData: {
+  }
+}>();
+const browserCollections = {
+  docs: create.doc("docs", {"how-it-works.mdx": () => import("../content/docs/how-it-works.mdx?collection=docs"), "index.mdx": () => import("../content/docs/index.mdx?collection=docs"), "installation.mdx": () => import("../content/docs/installation.mdx?collection=docs"), "quickstart.mdx": () => import("../content/docs/quickstart.mdx?collection=docs"), "api-reference/create-scrape-client.mdx": () => import("../content/docs/api-reference/create-scrape-client.mdx?collection=docs"), "concepts/error-handling.mdx": () => import("../content/docs/concepts/error-handling.mdx?collection=docs"), "concepts/failover-matrix.mdx": () => import("../content/docs/concepts/failover-matrix.mdx?collection=docs"), "concepts/markdown-pipeline.mdx": () => import("../content/docs/concepts/markdown-pipeline.mdx?collection=docs"), "providers/browserbase.mdx": () => import("../content/docs/providers/browserbase.mdx?collection=docs"), "providers/firecrawl.mdx": () => import("../content/docs/providers/firecrawl.mdx?collection=docs"), "providers/index.mdx": () => import("../content/docs/providers/index.mdx?collection=docs"), "providers/jina.mdx": () => import("../content/docs/providers/jina.mdx?collection=docs"), "providers/local.mdx": () => import("../content/docs/providers/local.mdx?collection=docs"), "providers/spider.mdx": () => import("../content/docs/providers/spider.mdx?collection=docs"), "providers/tavily.mdx": () => import("../content/docs/providers/tavily.mdx?collection=docs"), "guides/model-context-protocol.mdx": () => import("../content/docs/guides/model-context-protocol.mdx?collection=docs"), "guides/offline-testing.mdx": () => import("../content/docs/guides/offline-testing.mdx?collection=docs"), "guides/vercel-ai-sdk.mdx": () => import("../content/docs/guides/vercel-ai-sdk.mdx?collection=docs"), }),
+};
+export default browserCollections;

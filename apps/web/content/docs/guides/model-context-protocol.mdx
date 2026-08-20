@@ -1,0 +1,17 @@
+---
+title: Model Context Protocol (MCP)
+description: Enable live web scraping inside Claude Desktop, Cursor, and Hermes.
+---
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "scrape-sdk": {
+      "command": "npx",
+      "args": ["-y", "scrape-sdk-mcp"]
+    }
+  }
+}
+```

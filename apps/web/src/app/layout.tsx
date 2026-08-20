@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Provider } from '@/components/provider';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Scrape SDK — The Unified Scraping API for AI Agents",
-  description: "One TypeScript client for web scraping, crawling, and clean markdown extraction across Firecrawl, Jina, Tavily, and Local Cheerio.",
+  title: 'Scrape SDK | Web scraping for agents, handled.',
+  description: 'Add, crawl, extract, and convert web pages to clean markdown across Firecrawl, Jina, Tavily, and Local Cheerio with one TypeScript API.',
 };
 
 export default function RootLayout({
@@ -12,9 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark bg-[#0a0a0a] text-white">
-      <body className="antialiased min-h-screen selection:bg-emerald-500/30 selection:text-emerald-300">
-        {children}
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className="bg-[#090908] text-[#f4f3ef] antialiased">
+        <Provider>{children}</Provider>
       </body>
     </html>
   );

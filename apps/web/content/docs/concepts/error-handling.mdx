@@ -1,0 +1,17 @@
+---
+title: Diagnostic Error Codes
+description: Structured ScrapeError classes with retryable diagnostics.
+---
+
+```ts
+import { ScrapeError } from "scrape-sdk";
+
+try {
+  await scraper.scrape("https://example.com");
+} catch (err) {
+  if (err instanceof ScrapeError) {
+    console.log(err.code);      // "RATE_LIMITED" | "TIMEOUT" | "INVALID_URL"
+    console.log(err.retryable); // boolean
+  }
+}
+```

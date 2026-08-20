@@ -1,0 +1,20 @@
+---
+title: Local Cheerio Provider
+description: 100% offline, zero-token static HTML sanitization & Turndown ATX markdown conversion.
+---
+
+## Scope and Credentials
+
+Import the adapter directly from `scrape-sdk/local`:
+
+```ts title="scraper.ts"
+import { createScrapeClient } from "scrape-sdk";
+import { local } from "scrape-sdk/local";
+
+export const scraper = createScrapeClient({
+  provider: local(),
+});
+
+const result = await scraper.scrape("https://example.com");
+console.log(result.markdown);
+```

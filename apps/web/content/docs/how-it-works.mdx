@@ -1,0 +1,13 @@
+---
+title: How It Works Pipeline
+description: Inside the 4-stage extraction and sanitization pipeline.
+---
+
+Scrape SDK acts as a resilient buffer between your autonomous AI agents and edge scraping providers.
+
+## The 4-Stage Extraction Pipeline
+
+1. **Validation & Normalization**: Validates the URL format, applies standardized headers, and bounds request execution with a timeout.
+2. **Primary Provider Execution**: Calls the configured primary adapter with structured options.
+3. **Automatic Failover**: If HTTP 429, 502, or timeout occurs, routes to secondary fallback provider before throwing an error.
+4. **DOM Sanitization & AST Formatting**: Strips JavaScript tags, CSS styles, and navigation chrome, converting the DOM into token-dense ATX markdown.

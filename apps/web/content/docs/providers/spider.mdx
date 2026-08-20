@@ -1,0 +1,20 @@
+---
+title: Spider.cloud Provider
+description: High-throughput batch web crawling and sitemap extraction.
+---
+
+## Scope and Credentials
+
+Import the adapter directly from `scrape-sdk/spider`:
+
+```ts title="scraper.ts"
+import { createScrapeClient } from "scrape-sdk";
+import { spider } from "scrape-sdk/spider";
+
+export const scraper = createScrapeClient({
+  provider: spider(),
+});
+
+const result = await scraper.scrape("https://example.com");
+console.log(result.markdown);
+```

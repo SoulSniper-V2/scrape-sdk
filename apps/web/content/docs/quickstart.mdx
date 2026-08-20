@@ -1,0 +1,31 @@
+---
+title: Quickstart Walkthrough
+description: Get up and running with Scrape SDK in less than 2 minutes.
+---
+
+## 1. Create a client with failover
+
+Initialize the client with a primary provider and a fallback provider:
+
+```ts title="scraper.ts"
+import { createScrapeClient } from "scrape-sdk";
+import { firecrawl } from "scrape-sdk/firecrawl";
+import { jina } from "scrape-sdk/jina";
+
+export const scraper = createScrapeClient({
+  provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
+  fallback: jina(), // shifts on 429 rate limit
+});
+```
+
+## 2. Extract clean markdown
+
+```ts
+const result = await scraper.scrape("https://news.ycombinator.com", {
+  format: "markdown",
+  onlyMainContent: true,
+});
+
+console.log(result.markdown);
+console.log(`Extracted via ${result.provider} in ${result.latencyMs}ms`);
+```

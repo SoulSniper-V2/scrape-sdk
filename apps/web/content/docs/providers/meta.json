@@ -1,0 +1,12 @@
+{
+  "title": "Providers",
+  "pages": [
+    "index",
+    "firecrawl",
+    "jina",
+    "tavily",
+    "spider",
+    "browserbase",
+    "local"
+  ]
+}

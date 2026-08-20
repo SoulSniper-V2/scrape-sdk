@@ -1,0 +1,13 @@
+---
+title: Failover & Retry Matrix
+description: Resilient multi-tier failover mechanics for autonomous agent pipelines.
+---
+
+When building autonomous AI agent workflows, scraping rate limits and timeouts can cause catastrophic agent failures. Scrape SDK implements an automatic fallback state machine.
+
+```ts
+const scraper = createScrapeClient({
+  provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
+  fallback: jina(), // shifts on HTTP 429 rate limit
+});
+```

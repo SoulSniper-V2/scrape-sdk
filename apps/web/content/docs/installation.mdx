@@ -1,0 +1,48 @@
+---
+title: Installation & Skills CLI
+description: Install the server-side TypeScript package or install it directly as an AI coding agent skill.
+---
+
+## Install as an Agent Skill
+
+Equip your AI coding agent (Claude Code, Cursor, Antigravity, Hermes) with the Scrape SDK skill instructions directly via the Skills CLI:
+
+```bash
+# Add to current project:
+npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
+
+# Add globally across all projects:
+npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk -g
+```
+
+The skills CLI asks which detected agents should receive the skill and saves `skills/scrape-sdk/SKILL.md` into your agent workspace.
+
+## Package Managers
+
+Install the core TypeScript library:
+
+```bash
+# bun (recommended)
+bun add scrape-sdk
+
+# npm
+npm install scrape-sdk
+
+# pnpm
+pnpm add scrape-sdk
+```
+
+## Subpath Exports
+
+Scrape SDK provides tree-shakable subpath exports:
+
+| Subpath | Description |
+| :--- | :--- |
+| `scrape-sdk` | Core `createScrapeClient` engine |
+| `scrape-sdk/firecrawl` | Firecrawl v1 adapter |
+| `scrape-sdk/jina` | Jina Reader adapter |
+| `scrape-sdk/tavily` | Tavily Extract adapter |
+| `scrape-sdk/spider` | Spider.cloud batch crawler |
+| `scrape-sdk/browserbase` | Browserbase headless cloud sessions |
+| `scrape-sdk/local` | Zero-token Cheerio parser |
+| `scrape-sdk/ai` | Vercel AI SDK `scrapeTool` |

@@ -1,0 +1,8 @@
+{
+  "title": "Guides",
+  "pages": [
+    "vercel-ai-sdk",
+    "model-context-protocol",
+    "offline-testing"
+  ]
+}

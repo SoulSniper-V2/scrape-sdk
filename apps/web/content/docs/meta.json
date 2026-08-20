@@ -1,0 +1,17 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "installation",
+    "quickstart",
+    "how-it-works",
+    "---Providers---",
+    "providers",
+    "---Concepts---",
+    "concepts",
+    "---Guides---",
+    "guides",
+    "---API Reference---",
+    "api-reference"
+  ]
+}

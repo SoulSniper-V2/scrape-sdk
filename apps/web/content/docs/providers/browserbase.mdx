@@ -1,0 +1,20 @@
+---
+title: Browserbase Provider
+description: Headless cloud browser sessions with residential proxy rotation.
+---
+
+## Scope and Credentials
+
+Import the adapter directly from `scrape-sdk/browserbase`:
+
+```ts title="scraper.ts"
+import { createScrapeClient } from "scrape-sdk";
+import { browserbase } from "scrape-sdk/browserbase";
+
+export const scraper = createScrapeClient({
+  provider: browserbase(),
+});
+
+const result = await scraper.scrape("https://example.com");
+console.log(result.markdown);
+```

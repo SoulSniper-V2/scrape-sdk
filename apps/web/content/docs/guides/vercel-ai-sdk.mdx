@@ -1,0 +1,22 @@
+---
+title: Vercel AI SDK Tools
+description: Equip LLM agents with autonomous web extraction tools.
+---
+
+```ts
+import { generateText } from "ai";
+import { openai } from "@ai-sdk/openai";
+import { createScrapeClient } from "scrape-sdk";
+import { jina } from "scrape-sdk/jina";
+import { scrapeTool } from "scrape-sdk/ai";
+
+const scraper = createScrapeClient({ provider: jina() });
+
+const { text } = await generateText({
+  model: openai("gpt-4o"),
+  tools: {
+    scrape: scrapeTool(scraper),
+  },
+  prompt: "Extract the latest updates from https://news.ycombinator.com",
+});
+```

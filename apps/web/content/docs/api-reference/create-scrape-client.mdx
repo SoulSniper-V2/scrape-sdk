@@ -1,0 +1,17 @@
+---
+title: createScrapeClient()
+description: Factory function to create a typed, resilient ScrapeClient instance.
+---
+
+## Type Signature
+
+```ts
+export interface ScrapeClientConfig {
+  provider: ScrapeProvider;
+  fallback?: ScrapeProvider;
+  defaultFormat?: "markdown" | "html" | "text" | "json";
+  timeoutMs?: number;
+}
+
+export function createScrapeClient(config: ScrapeClientConfig): ScrapeClient;
+```

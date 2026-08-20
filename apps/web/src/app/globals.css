@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 
 :root {
   --home-bg: #090908;
@@ -12,70 +12,39 @@
   --home-blue: #7ba2ff;
 }
 
-body {
+.domain-docs-shell {
+  --color-fd-background: #090908;
+  --color-fd-foreground: #f1efe8;
+  --color-fd-muted: #11110f;
+  --color-fd-muted-foreground: #92918a;
+  --color-fd-popover: #11110f;
+  --color-fd-popover-foreground: #f1efe8;
+  --color-fd-card: #11110f;
+  --color-fd-card-foreground: #f1efe8;
+  --color-fd-border: #2b2b27;
+  --color-fd-primary: #8aabff;
+  --color-fd-primary-foreground: #090908;
+  --color-fd-secondary: #171715;
+  --color-fd-secondary-foreground: #f1efe8;
+  --color-fd-accent: #20201d;
+  --color-fd-accent-foreground: #fff;
+  --color-fd-ring: #8aabff;
+  min-height: 100vh;
   background: #090908;
-  color: #f4f3ef;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  overflow-x: hidden;
+  color: #f1efe8;
+  color-scheme: dark;
 }
 
 .font-editorial {
   font-family: "Iowan Old Style", Baskerville, "Times New Roman", Georgia, serif;
 }
 
-.hero-art {
-  position: absolute;
-  bottom: 0px;
-  left: 0;
-  right: 0;
-  z-index: 0;
-  width: 100%;
-  height: 280px;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0.75;
-}
-
-.hero-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center bottom;
-}
-
-.hero-art::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 1;
-  height: 90px;
-  background: linear-gradient(to bottom, #090908 0%, transparent 100%);
-  content: "";
-}
-
-.hero-art::after {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  left: 0;
-  z-index: 1;
-  height: 60px;
-  background: linear-gradient(to top, #090908 0%, transparent 100%);
-  content: "";
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.animate-marquee {
-  display: flex;
-  width: max-content;
-  animation: marquee 28s linear infinite;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
+.domain-docs-shell article h1 {
+  color: #f4f3ef;
+  font-family: "Iowan Old Style", Baskerville, "Times New Roman", serif;
+  font-size: clamp(2.9rem, 5.4vw, 5.4rem);
+  font-weight: 400;
+  letter-spacing: -0.057em;
+  line-height: 0.94;
+  margin-bottom: 0.85rem;
 }
