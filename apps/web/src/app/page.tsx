@@ -100,6 +100,8 @@ export default function Home() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [skillCopied, setSkillCopied] = useState(false);
+  const [promptCopied, setPromptCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'quickstart' | 'ai' | 'mcp' | 'cli'>('quickstart');
   const [codeCopied, setCodeCopied] = useState(false);
 
@@ -173,6 +175,25 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+    const copySkill = () => {
+    navigator.clipboard.writeText('npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk');
+    setSkillCopied(true);
+    setTimeout(() => setSkillCopied(false), 2000);
+  };
+
+  const copyAgentPrompt = () => {
+    const promptText = `Install the scrape-sdk skill for yourself:
+
+Run: npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
+
+If that command is not available, save https://scrape-sdk-olive.vercel.app/skills/scrape-sdk/SKILL.md into your skills directory as scrape-sdk/SKILL.md instead.
+
+Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown from any URL.`;
+    navigator.clipboard.writeText(promptText);
+    setPromptCopied(true);
+    setTimeout(() => setPromptCopied(false), 2000);
+  };
+
   const copyCode = () => {
     navigator.clipboard.writeText(CODE_EXAMPLES[activeTab]);
     setCodeCopied(true);
@@ -241,6 +262,25 @@ export default function Home() {
               <span className="text-[#7ba2ff]">$</span>
               <code>bun add scrape-sdk</code>
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#77766f]" />}
+            </button>
+          </div>
+
+          <div className="hero-reveal mt-3 flex flex-wrap items-center justify-center gap-2.5">
+            <button
+              onClick={copySkill}
+              className="inline-flex min-h-[38px] items-center justify-center gap-2 px-4 rounded border border-[#2b2b27] bg-[#11110f]/80 backdrop-blur text-[#a09f97] hover:text-white hover:border-[#384c7a] font-mono text-[11.5px] transition-all"
+            >
+              <span className="text-[#7ba2ff]">npx skills add</span>
+              <span className="text-[#dedcd4]">SoulSniper-V2/scrape-sdk</span>
+              {skillCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-[#6f6e68]" />}
+            </button>
+            <button
+              onClick={copyAgentPrompt}
+              className="inline-flex min-h-[38px] items-center justify-center gap-2 px-4 rounded border border-[#2b2b27] bg-[#11110f]/80 backdrop-blur text-[#d6d5ce] hover:text-white hover:border-[#7ba2ff]/50 text-[11.5px] font-medium transition-all"
+            >
+              <span>🤖</span>
+              <span>{promptCopied ? 'Copied Prompt to Clipboard!' : 'Copy Prompt for Agent'}</span>
+              {promptCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-[#6f6e68]" />}
             </button>
           </div>
         </div>
