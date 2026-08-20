@@ -7,7 +7,7 @@ export function GET() {
 
 ## Agent Resources
 
-- [Complete Documentation](https://web-three-lilac-53.vercel.app/llms-full.txt): All documentation in one file.
+- [Complete Documentation](https://scrape-sdk-olive.vercel.app/llms-full.txt): All documentation in one file.
 - [Install Scrape SDK Skill](https://github.com/SoulSniper-V2/scrape-sdk/tree/main/skills/scrape-sdk): \`npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk\`
 - [Source Code](https://github.com/SoulSniper-V2/scrape-sdk): Package source, providers, tests, and examples.
 
