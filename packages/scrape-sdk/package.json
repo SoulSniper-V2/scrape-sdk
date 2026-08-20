@@ -1,6 +1,6 @@
 {
   "name": "scrape-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Unified, multi-provider web scraping, crawling, and clean markdown extraction SDK for TypeScript and AI agents",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -68,5 +68,14 @@
     "@types/node": "^20.14.10",
     "@types/turndown": "^5.0.5",
     "typescript": "^5.5.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SoulSniper-V2/scrape-sdk.git",
+    "directory": "packages/scrape-sdk"
+  },
+  "homepage": "https://github.com/SoulSniper-V2/scrape-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/SoulSniper-V2/scrape-sdk/issues"
   }
 }
