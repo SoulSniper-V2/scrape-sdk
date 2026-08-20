@@ -85,6 +85,15 @@ console.log(text);`,
   }
 }`,
 
+  skill: `# Install as an Agent Skill for Claude Code, Cursor, Codex, Hermes
+npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
+
+# Or paste this prompt into your agent:
+Install the scrape-sdk skill for yourself:
+Run: npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
+If that command is not available, save https://scrape-sdk-olive.vercel.app/skills/scrape-sdk/SKILL.md into your skills directory as scrape-sdk/SKILL.md instead.
+Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown from any URL.`,
+
   cli: `# Instant CLI extraction
 bunx scrape-sdk https://news.ycombinator.com
 
@@ -102,7 +111,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [skillCopied, setSkillCopied] = useState(false);
   const [promptCopied, setPromptCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'quickstart' | 'ai' | 'mcp' | 'cli'>('quickstart');
+  const [activeTab, setActiveTab] = useState<'quickstart' | 'skill' | 'ai' | 'mcp' | 'cli'>('quickstart');
   const [codeCopied, setCodeCopied] = useState(false);
 
   useGSAP(() => {
@@ -648,6 +657,7 @@ const result = await scraper.scrape("https://stripe.com", {
             <div className="flex space-x-1">
               {[
                 { id: 'quickstart', label: 'TypeScript' },
+                { id: 'skill', label: 'Agent Skill' },
                 { id: 'ai', label: 'Vercel AI SDK' },
                 { id: 'mcp', label: 'MCP Server' },
                 { id: 'cli', label: 'CLI' },
@@ -693,6 +703,13 @@ const result = await scraper.scrape("https://stripe.com", {
             <span>Start building</span>
             <ArrowUpRight className="w-4 h-4" />
           </Link>
+          <button
+            onClick={copyAgentPrompt}
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 px-6 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-medium text-[13px] hover:translate-y-[-1px] transition-transform"
+          >
+            <span>🤖</span>
+            <span>{promptCopied ? 'Copied Prompt!' : 'Copy Agent Prompt'}</span>
+          </button>
           <a
             href="https://github.com/SoulSniper-V2/scrape-sdk"
             target="_blank"
@@ -703,6 +720,16 @@ const result = await scraper.scrape("https://stripe.com", {
             <span>View source</span>
           </a>
         </div>
+        <p className="mt-5 text-xs text-[#8f8e87]">
+          <a
+            href="/skills/scrape-sdk/SKILL.md"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 hover:text-white transition-colors"
+          >
+            Read raw SKILL.md first ↗
+          </a>
+        </p>
       </section>
 
       {/* Footer */}
@@ -712,10 +739,16 @@ const result = await scraper.scrape("https://stripe.com", {
           <span>Scrape SDK</span>
           <span>— Open source, MIT licensed</span>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 flex-wrap">
           <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
+          <a href="/skills/scrape-sdk/SKILL.md" target="_blank" rel="noreferrer" className="hover:text-white transition-colors font-mono">
+            SKILL.md
+          </a>
+          <Link href="/llms.txt" className="hover:text-white transition-colors font-mono">
+            llms.txt
+          </Link>
           <a href="https://x.com/be_arsh" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
-            Created by @be_arsh
+            @be_arsh
           </a>
           <a href="https://github.com/SoulSniper-V2/scrape-sdk" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
             GitHub
