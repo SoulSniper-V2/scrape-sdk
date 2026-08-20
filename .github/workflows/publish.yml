@@ -1,13 +1,16 @@
-name: Publish to npm
+name: Auto Publish to npm on Push
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -18,16 +21,26 @@ jobs:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Install Dependencies & Build
+        run: |
+          npm install
+          cd packages/scrape-sdk
+          npm install
+          npm run build
+          npm test
 
-      - name: Build Core SDK
-        run: cd packages/scrape-sdk && npm install && npm run build
+      - name: Auto-Publish to npm on Every Commit
+        run: |
+          cd packages/scrape-sdk
+          CURRENT_VER=$(node -p "require('./package.json').version")
+          NPM_VER=$(npm view scrape-sdk version 2>/dev/null || echo "0.0.0")
+          echo "Local version: $CURRENT_VER, NPM version: $NPM_VER"
 
-      - name: Run Tests
-        run: cd packages/scrape-sdk && npm test
+          if [ "$CURRENT_VER" = "$NPM_VER" ]; then
+            echo "Version already on npm. Auto-bumping patch version..."
+            npm version patch --no-git-tag-version
+          fi
 
-      - name: Publish to npm
-        run: cd packages/scrape-sdk && npm publish --access public
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
