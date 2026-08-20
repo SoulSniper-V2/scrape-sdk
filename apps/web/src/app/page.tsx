@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { 
   Sparkles, 
   Terminal, 
@@ -16,16 +17,20 @@ import {
   RefreshCw, 
   Cpu, 
   Globe, 
-  ChevronRight 
+  ChevronRight,
+  Workflow,
+  ArrowUpRight,
+  Database,
+  Bot
 } from 'lucide-react';
 
 const PROVIDERS = [
-  { id: 'firecrawl', name: 'Firecrawl', badge: 'Deep Crawl', desc: 'Full JavaScript rendering & dynamic SPA extraction' },
-  { id: 'jina', name: 'Jina Reader', badge: 'Zero Config', desc: 'High-speed markdown reader directly via r.jina.ai' },
-  { id: 'tavily', name: 'Tavily', badge: 'Agent Search', desc: 'Optimized search & extract for autonomous LLMs' },
-  { id: 'spider', name: 'Spider', badge: 'High Throughput', desc: 'Ultra-fast batch crawling for datasets' },
-  { id: 'browserbase', name: 'Browserbase', badge: 'Headless Cloud', desc: 'Full cloud browser sessions with proxy rotation' },
-  { id: 'local', name: 'Local Cheerio', badge: 'Zero Token', desc: 'Offline HTML sanitization & Turndown markdown engine' },
+  { id: 'firecrawl', name: 'Firecrawl', badge: 'Deep Crawl', desc: 'Full JavaScript rendering & dynamic SPA extraction', color: '#ff5c5c' },
+  { id: 'jina', name: 'Jina Reader', badge: 'Zero Config', desc: 'High-speed markdown reader directly via r.jina.ai', color: '#38bdf8' },
+  { id: 'tavily', name: 'Tavily', badge: 'Agent Search', desc: 'Optimized search & extract for autonomous LLMs', color: '#a855f7' },
+  { id: 'spider', name: 'Spider', badge: 'High Speed', desc: 'Ultra-fast batch crawling for datasets', color: '#f59e0b' },
+  { id: 'browserbase', name: 'Browserbase', badge: 'Headless Cloud', desc: 'Full cloud browser sessions with proxy rotation', color: '#ec4899' },
+  { id: 'local', name: 'Local Cheerio', badge: 'Zero Token', desc: 'Offline HTML sanitization & Turndown markdown engine', color: '#10b981' },
 ];
 
 const CODE_EXAMPLES = {
@@ -33,10 +38,10 @@ const CODE_EXAMPLES = {
 import { firecrawl } from "scrape-sdk/firecrawl";
 import { jina } from "scrape-sdk/jina";
 
-// Initialize with automatic failover!
+// Initialize with automatic multi-provider failover!
 const scraper = createScrapeClient({
   provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
-  fallback: jina(), // Seamlessly fallback if primary hits 429 rate limits
+  fallback: jina(), // Seamlessly fails over if primary hits 429 rate limits
 });
 
 const result = await scraper.scrape("https://stripe.com", {
@@ -55,7 +60,7 @@ import { scrapeTool } from "scrape-sdk/ai";
 
 const scraper = createScrapeClient({ provider: jina() });
 
-// First-class Vercel AI SDK Tool
+// First-class Vercel AI SDK Tool definition
 const { text } = await generateText({
   model: openai("gpt-4o"),
   tools: {
@@ -66,8 +71,8 @@ const { text } = await generateText({
 
 console.log(text);`,
 
-  mcp: `// Model Context Protocol (MCP) Server
-// Add to claude_desktop_config.json or cursor settings:
+  mcp: `// Model Context Protocol (MCP) Server for Claude Code & Cursor
+// Add to claude_desktop_config.json:
 {
   "mcpServers": {
     "scrape-sdk": {
@@ -77,8 +82,8 @@ console.log(text);`,
   }
 }
 
-// Available tools in Claude / Cursor:
-// - scrape_web(url, format, onlyMainContent)`,
+// Available tools in Claude / Cursor / Hermes:
+// - scrape_web({ url: string, format?: "markdown" | "html" | "text" })`,
 
   cli: `# Instant CLI Extraction
 npx scrape-sdk https://news.ycombinator.com
@@ -134,10 +139,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#090908] text-[#f4f3ef] selection:bg-[#7ba2ff]/20 selection:text-[#7ba2ff] font-sans antialiased">
       {/* Background Subtle Radial Glow */}
-      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(123,162,255,0.12),rgba(255,255,255,0))]" />
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(123,162,255,0.15),rgba(0,0,0,0))]" />
 
       {/* Navigation */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#090908]/80 border-b border-[#252522]">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#090908]/85 border-b border-[#22221f]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#7ba2ff] to-[#f4f3ef] flex items-center justify-center shadow-lg shadow-[#7ba2ff]/10">
@@ -159,19 +164,19 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <main className="max-w-6xl mx-auto px-6 pt-20 pb-24 relative">
+      <main className="max-w-6xl mx-auto px-6 pt-16 pb-24 relative">
         <div className="text-center max-w-3xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#171715] border border-[#2b2b27] text-xs text-[#a09f97]">
             <Sparkles className="w-3.5 h-3.5 text-[#7ba2ff]" />
             <span>The Unified Scraping & Markdown Engine for AI Agents</span>
           </div>
 
-          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-white leading-[1.1]">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.08]">
             Web scraping for agents, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#7ba2ff] via-[#f4f3ef] to-[#a09f97]">handled.</span>
           </h1>
 
           <p className="text-lg text-[#a09f97] max-w-2xl mx-auto leading-relaxed">
-            One TypeScript client for Firecrawl, Jina Reader, Tavily, Spider, Browserbase, and Local Cheerio with built-in failover, CLI, MCP server, and AI SDK tools.
+            One clean TypeScript API for Firecrawl, Jina Reader, Tavily, Spider, Browserbase, and Local Cheerio with automatic failover, CLI, and MCP tooling.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
@@ -195,10 +200,35 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Hero Visual Artwork */}
+        <div className="mt-12 relative rounded-2xl overflow-hidden border border-[#252522] bg-[#0c0c0b] shadow-2xl">
+          <div className="absolute inset-0 bg-gradient-to-t from-[#090908] via-transparent to-transparent z-10 pointer-events-none" />
+          <Image
+            src="/hero-crawler.jpg"
+            alt="Scrape SDK Architecture Engine"
+            width={1200}
+            height={675}
+            priority
+            className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity duration-700"
+          />
+          <div className="absolute bottom-6 left-6 right-6 z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#090908]/85 backdrop-blur-md p-4 rounded-xl border border-[#2b2b27]">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-mono text-white">Multi-Provider Failover Matrix Active</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-[#a09f97] font-mono">
+              <span>Firecrawl</span> ➔ <span>Jina</span> ➔ <span>Local Cheerio</span>
+            </div>
+          </div>
+        </div>
+
         {/* Live Interactive Scraper Sandbox */}
         <section className="mt-20">
           <div className="rounded-2xl bg-[#11110f] border border-[#252522] shadow-2xl overflow-hidden">
-            <div className="p-4 sm:p-6 border-b border-[#252522] bg-[#141412]/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="p-4 sm:p-6 border-b border-[#252522] bg-[#141412]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-base font-semibold text-white flex items-center gap-2">
                   <Terminal className="w-4 h-4 text-[#7ba2ff]" />
@@ -290,6 +320,42 @@ export default function Home() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </section>
+
+        {/* Architecture Flow Section */}
+        <section className="mt-24 space-y-8">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-bold tracking-tight text-white">How It Works Under the Hood</h2>
+            <p className="text-sm text-[#a09f97]">Your agent interacts with one unified contract. Scrape SDK manages providers and failover.</p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-[#11110f] border border-[#252522] shadow-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+              <div className="p-5 rounded-xl bg-[#171715] border border-[#2b2b27] space-y-2">
+                <div className="w-8 h-8 rounded-lg bg-[#7ba2ff]/10 border border-[#7ba2ff]/20 flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-[#7ba2ff]" />
+                </div>
+                <h3 className="font-semibold text-white text-sm">Your AI Agent / App</h3>
+                <p className="text-xs text-[#a09f97]">Calls <code>scrape(url)</code> via TypeScript, CLI, or Vercel AI SDK.</p>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#1a1a18] border border-[#7ba2ff]/40 space-y-2 relative shadow-lg shadow-[#7ba2ff]/5">
+                <div className="w-8 h-8 rounded-lg bg-[#7ba2ff] flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-[#090908] fill-[#090908]" />
+                </div>
+                <h3 className="font-semibold text-white text-sm">Scrape SDK Core</h3>
+                <p className="text-xs text-[#a09f97]">Executes primary adapter with timeout & rate-limit auto-failover engine.</p>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#171715] border border-[#2b2b27] space-y-2">
+                <div className="w-8 h-8 rounded-lg bg-[#38bdf8]/10 border border-[#38bdf8]/20 flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-[#38bdf8]" />
+                </div>
+                <h3 className="font-semibold text-white text-sm">Pluggable Providers</h3>
+                <p className="text-xs text-[#a09f97]">Firecrawl, Jina Reader, Tavily, Spider, Browserbase, or Local Cheerio.</p>
+              </div>
             </div>
           </div>
         </section>
