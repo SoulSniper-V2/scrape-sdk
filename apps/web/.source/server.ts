@@ -18,8 +18,8 @@ import * as __fd_glob_7 from "../content/docs/installation.mdx?collection=docs"
 import * as __fd_glob_6 from "../content/docs/index.mdx?collection=docs"
 import * as __fd_glob_5 from "../content/docs/how-it-works.mdx?collection=docs"
 import { default as __fd_glob_4 } from "../content/docs/providers/meta.json?collection=docs"
-import { default as __fd_glob_3 } from "../content/docs/guides/meta.json?collection=docs"
-import { default as __fd_glob_2 } from "../content/docs/concepts/meta.json?collection=docs"
+import { default as __fd_glob_3 } from "../content/docs/concepts/meta.json?collection=docs"
+import { default as __fd_glob_2 } from "../content/docs/guides/meta.json?collection=docs"
 import { default as __fd_glob_1 } from "../content/docs/api-reference/meta.json?collection=docs"
 import { default as __fd_glob_0 } from "../content/docs/meta.json?collection=docs"
 import { server } from 'fumadocs-mdx/runtime/server';
@@ -30,4 +30,4 @@ const create = server<typeof Config, import("fumadocs-mdx/runtime/types").Intern
   }
 }>();
 
-export const docs = await create.docs("docs", "content/docs", {"meta.json": __fd_glob_0, "api-reference/meta.json": __fd_glob_1, "concepts/meta.json": __fd_glob_2, "guides/meta.json": __fd_glob_3, "providers/meta.json": __fd_glob_4, }, {"how-it-works.mdx": __fd_glob_5, "index.mdx": __fd_glob_6, "installation.mdx": __fd_glob_7, "quickstart.mdx": __fd_glob_8, "api-reference/create-scrape-client.mdx": __fd_glob_9, "concepts/error-handling.mdx": __fd_glob_10, "concepts/failover-matrix.mdx": __fd_glob_11, "concepts/markdown-pipeline.mdx": __fd_glob_12, "guides/model-context-protocol.mdx": __fd_glob_13, "guides/offline-testing.mdx": __fd_glob_14, "guides/vercel-ai-sdk.mdx": __fd_glob_15, "providers/browserbase.mdx": __fd_glob_16, "providers/firecrawl.mdx": __fd_glob_17, "providers/index.mdx": __fd_glob_18, "providers/jina.mdx": __fd_glob_19, "providers/local.mdx": __fd_glob_20, "providers/spider.mdx": __fd_glob_21, "providers/tavily.mdx": __fd_glob_22, });
+export const docs = await create.docs("docs", "content/docs", {"meta.json": __fd_glob_0, "api-reference/meta.json": __fd_glob_1, "guides/meta.json": __fd_glob_2, "concepts/meta.json": __fd_glob_3, "providers/meta.json": __fd_glob_4, }, {"how-it-works.mdx": __fd_glob_5, "index.mdx": __fd_glob_6, "installation.mdx": __fd_glob_7, "quickstart.mdx": __fd_glob_8, "api-reference/create-scrape-client.mdx": __fd_glob_9, "concepts/error-handling.mdx": __fd_glob_10, "concepts/failover-matrix.mdx": __fd_glob_11, "concepts/markdown-pipeline.mdx": __fd_glob_12, "guides/model-context-protocol.mdx": __fd_glob_13, "guides/offline-testing.mdx": __fd_glob_14, "guides/vercel-ai-sdk.mdx": __fd_glob_15, "providers/browserbase.mdx": __fd_glob_16, "providers/firecrawl.mdx": __fd_glob_17, "providers/index.mdx": __fd_glob_18, "providers/jina.mdx": __fd_glob_19, "providers/local.mdx": __fd_glob_20, "providers/spider.mdx": __fd_glob_21, "providers/tavily.mdx": __fd_glob_22, });

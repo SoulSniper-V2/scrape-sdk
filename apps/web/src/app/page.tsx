@@ -287,7 +287,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
               onClick={copyAgentPrompt}
               className="inline-flex min-h-[38px] items-center justify-center gap-2 px-4 rounded border border-[#2b2b27] bg-[#11110f]/80 backdrop-blur text-[#d6d5ce] hover:text-white hover:border-[#7ba2ff]/50 text-[11.5px] font-medium transition-all"
             >
-              <span>🤖</span>
+              <Terminal className="w-3.5 h-3.5 text-[#7ba2ff]" />
               <span>{promptCopied ? 'Copied Prompt to Clipboard!' : 'Copy Prompt for Agent'}</span>
               {promptCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-[#6f6e68]" />}
             </button>
@@ -707,7 +707,7 @@ const result = await scraper.scrape("https://stripe.com", {
             onClick={copyAgentPrompt}
             className="inline-flex min-h-[48px] items-center justify-center gap-2 px-6 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-medium text-[13px] hover:translate-y-[-1px] transition-transform"
           >
-            <span>🤖</span>
+            <Terminal className="w-3.5 h-3.5 text-[#7ba2ff]" />
             <span>{promptCopied ? 'Copied Prompt!' : 'Copy Agent Prompt'}</span>
           </button>
           <a
