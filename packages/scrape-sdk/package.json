@@ -1,0 +1,72 @@
+{
+  "name": "scrape-sdk",
+  "version": "0.1.0",
+  "description": "Unified, multi-provider web scraping, crawling, and clean markdown extraction SDK for TypeScript and AI agents",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "scrape-sdk": "./dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./firecrawl": {
+      "types": "./dist/adapters/firecrawl.d.ts",
+      "import": "./dist/adapters/firecrawl.js"
+    },
+    "./jina": {
+      "types": "./dist/adapters/jina.d.ts",
+      "import": "./dist/adapters/jina.js"
+    },
+    "./tavily": {
+      "types": "./dist/adapters/tavily.d.ts",
+      "import": "./dist/adapters/tavily.js"
+    },
+    "./spider": {
+      "types": "./dist/adapters/spider.d.ts",
+      "import": "./dist/adapters/spider.js"
+    },
+    "./browserbase": {
+      "types": "./dist/adapters/browserbase.d.ts",
+      "import": "./dist/adapters/browserbase.js"
+    },
+    "./local": {
+      "types": "./dist/adapters/local.d.ts",
+      "import": "./dist/adapters/local.js"
+    },
+    "./ai": {
+      "types": "./dist/ai/index.d.ts",
+      "import": "./dist/ai/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.test.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "scraper",
+    "web-scraping",
+    "crawler",
+    "markdown",
+    "firecrawl",
+    "jina",
+    "tavily",
+    "ai-agents",
+    "mcp",
+    "vercel-ai-sdk"
+  ],
+  "author": "Arush Wadhawan <https://x.com/be_arsh>",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "turndown": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/turndown": "^5.0.5",
+    "typescript": "^5.5.4"
+  }
+}
