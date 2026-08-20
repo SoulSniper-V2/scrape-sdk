@@ -1,6 +1,6 @@
 {
   "name": "scrape-sdk",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "Unified, multi-provider web scraping, crawling, and clean markdown extraction SDK for TypeScript and AI agents",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

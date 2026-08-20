@@ -29,18 +29,17 @@ jobs:
           npm run build
           npm test
 
-      - name: Auto-Publish to npm on Every Commit
+      - name: Publish to npm
         run: |
           cd packages/scrape-sdk
           CURRENT_VER=$(node -p "require('./package.json').version")
-          NPM_VER=$(npm view scrape-sdk version 2>/dev/null || echo "0.0.0")
-          echo "Local version: $CURRENT_VER, NPM version: $NPM_VER"
-
-          if [ "$CURRENT_VER" = "$NPM_VER" ]; then
-            echo "Version already on npm. Auto-bumping patch version..."
-            npm version patch --no-git-tag-version
+          
+          # Check if this exact version already exists on npm
+          if npm view "scrape-sdk@${CURRENT_VER}" version --json >/dev/null 2>&1; then
+            echo "::notice ::Version ${CURRENT_VER} is already published on npm. Skipping duplicate publish."
+          else
+            echo "Publishing release version ${CURRENT_VER} to npm registry..."
+            npm publish --access public
           fi
-
-          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
