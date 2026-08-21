@@ -1,20 +1,12 @@
 ---
-title: Spider.cloud Provider
-description: High-throughput batch web crawling and sitemap extraction.
+title: Spider.cloud
+description: Single-page scrape and multi-page crawl.
 ---
 
-## Scope and Credentials
-
-Import the adapter directly from `scrape-sdk/spider`:
-
-```ts title="scraper.ts"
-import { createScrapeClient } from "scrape-sdk";
+```ts
 import { spider } from "scrape-sdk/spider";
 
-export const scraper = createScrapeClient({
-  provider: spider(),
-});
-
-const result = await scraper.scrape("https://example.com");
-console.log(result.markdown);
+spider({ apiKey: process.env.SPIDER_API_KEY! })
 ```
+
+Uses `POST https://api.spider.cloud/scrape` for one URL and `POST https://api.spider.cloud/crawl` for a site. Not `/v1/crawl`.

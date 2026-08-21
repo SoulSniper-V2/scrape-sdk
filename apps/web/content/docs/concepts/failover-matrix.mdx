@@ -1,13 +1,10 @@
 ---
-title: Failover & Retry Matrix
-description: Resilient multi-tier failover mechanics for autonomous agent pipelines.
+title: Failover and retries
+description: What is retried, what fails over, what does not.
 ---
 
-When building autonomous AI agent workflows, scraping rate limits and timeouts can cause catastrophic agent failures. Scrape SDK implements an automatic fallback state machine.
-
-```ts
-const scraper = createScrapeClient({
-  provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
-  fallback: jina(), // shifts on HTTP 429 rate limit
-});
-```
+- **Retryable:** HTTP 429/432/433, 408/504, 5xx, abort timeouts.
+- **Not retryable:** 401/403, 4xx (except the above), `CapabilityError`, bad URLs.
+- `retries` (default `1`) is extra attempts **per provider** on retryable errors only.
+- Then the next provider in the chain runs. `onFailover(error, from, to)` fires once per hop.
+- Timeouts use `AbortSignal`, so the in-flight `fetch` is cancelled.

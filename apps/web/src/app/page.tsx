@@ -40,47 +40,49 @@ const CODE_EXAMPLES = {
   quickstart: `import { createScrapeClient } from "scrape-sdk";
 import { firecrawl } from "scrape-sdk/firecrawl";
 import { jina } from "scrape-sdk/jina";
+import { local } from "scrape-sdk/local";
 
-// Initialize client with automatic failover
 const scraper = createScrapeClient({
-  provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
-  fallback: jina(), // shifts on 429 rate limit
+  providers: [
+    firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! }),
+    jina(),
+    local(),
+  ],
 });
 
-const result = await scraper.scrape("https://stripe.com", {
+const page = await scraper.scrape("https://stripe.com", {
   format: "markdown",
   onlyMainContent: true,
 });
 
-console.log(result.markdown);
-console.log(\`Extracted via \${result.provider} in \${result.latencyMs}ms\`);`,
+console.log(page.markdown);
+console.log(\`via \${page.provider} in \${page.latencyMs}ms\`);`,
 
-  ai: `import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { createScrapeClient } from "scrape-sdk";
-import { jina } from "scrape-sdk/jina";
-import { scrapeTool } from "scrape-sdk/ai";
+  ai: `import { generateText, stepCountIs } from "ai";
+import { fromEnv } from "scrape-sdk";
+import { createTools } from "scrape-sdk/ai";
 
-const scraper = createScrapeClient({ provider: jina() });
+const scraper = fromEnv();
 
-// First-class Vercel AI SDK Tool
 const { text } = await generateText({
-  model: openai("gpt-4o"),
-  tools: {
-    scrape: scrapeTool(scraper),
-  },
+  model: "openai/gpt-5.4",
+  tools: createTools(scraper),
+  stopWhen: stepCountIs(6),
   prompt: "Summarize top stories from https://news.ycombinator.com",
 });
 
 console.log(text);`,
 
-  mcp: `// Model Context Protocol (MCP) Server for Claude & Cursor
-// Add to claude_desktop_config.json:
+  mcp: `// MCP via official SDK — Claude Desktop, Cursor
 {
   "mcpServers": {
     "scrape-sdk": {
       "command": "npx",
-      "args": ["-y", "scrape-sdk-mcp"]
+      "args": ["-y", "scrape-sdk-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": "fc-...",
+        "TAVILY_API_KEY": "tvly-..."
+      }
     }
   }
 }`,
@@ -209,7 +211,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
     setTimeout(() => setCodeCopied(false), 2000);
   };
 
-  const manifestoText = "Scrape the URL. Return the exact markdown. Fallback before the agent fails.";
+  const manifestoText = "Scrape the URL. Search if you need to. Fail over before the agent dies.";
 
   return (
     <main ref={root} className="min-h-screen bg-[#090908] text-[#f4f3ef] antialiased selection:bg-[#7ba2ff]/20 selection:text-[#7ba2ff]">
@@ -253,7 +255,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
           </h1>
 
           <p className="hero-reveal mt-8 max-w-[620px] mx-auto text-[#aaa9a2] text-[clamp(1rem,1.4vw,1.18rem)] leading-[1.65] tracking-[-0.018em]">
-            Add, crawl, extract, and convert web pages to clean markdown across all providers with one TypeScript API.
+            Add, search, crawl, extract, and convert pages to markdown with one TypeScript client.
           </p>
 
           <div className="hero-reveal mt-10 flex flex-wrap items-center justify-center gap-3">
@@ -356,13 +358,17 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
               <code>{`import { createScrapeClient } from "scrape-sdk";
 import { firecrawl } from "scrape-sdk/firecrawl";
 import { jina } from "scrape-sdk/jina";
+import { local } from "scrape-sdk/local";
 
 const scraper = createScrapeClient({
-  provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
-  fallback: jina(), // shifts on 429 rate limits
+  providers: [
+    firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! }),
+    jina(),
+    local(),
+  ],
 });
 
-const result = await scraper.scrape("https://stripe.com", {
+const page = await scraper.scrape("https://stripe.com", {
   format: "markdown",
   onlyMainContent: true,
 });`}</code>

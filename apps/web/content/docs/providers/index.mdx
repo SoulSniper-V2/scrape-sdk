@@ -1,15 +1,13 @@
 ---
-title: Custom Provider Comparison
-description: Compare scraping engines, features, latency, and credentials.
+title: Providers
+description: What each adapter calls, and what it can do.
 ---
 
-Scrape SDK normalizes provider-specific responses into a single typed contract.
-
-| Provider | Type | Latency | JS Execution | Cost |
-| :--- | :--- | :--- | :--- | :--- |
-| **Firecrawl** | Cloud | 1200ms | Full Dynamic SPA | Paid (API Key) |
-| **Jina Reader** | Cloud | 350ms | Basic | Free / Token |
-| **Tavily Extract** | Cloud | 600ms | Server Rendered | Paid (API Key) |
-| **Spider.cloud** | Cloud | 200ms | High-Speed Batch | Paid (API Key) |
-| **Browserbase** | Cloud | 1800ms | Headless Chromium | Paid (API Key) |
-| **Local Cheerio** | Local | 40ms | Static HTML | 100% Free |
+| Provider | scrape | search | map | crawl | extract | JS |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Firecrawl v2 | yes | yes | `/map` | polls job id | JSON format | yes |
+| Jina | yes | yes | no | no | no | reader engine |
+| Tavily | `/extract` | `/search` | no | no | no | vendor |
+| Spider | `/scrape` | no | no | `/crawl` | no | `request: smart` |
+| Browserbase | Fetch API | no | no | no | JSON format | **no** |
+| Local | static HTML | no | no | no | no | no |

@@ -1,6 +1,14 @@
 ---
-title: Token Sanitization Engine
-description: How Scrape SDK eliminates token bloat and generates LLM-ready ATX markdown.
+title: Markdown pipeline
+description: Where markdown is produced.
 ---
 
-HTML pages often contain thousands of wasted tokens (navigation chrome, inline scripts, stylesheets, cookie banners). Scrape SDK strips bloat before generating clean ATX markdown.
+Cloud adapters return vendor markdown. Only **local** runs the in-process pipeline:
+
+1. Fetch HTML
+2. Strip nav/footer/script/style/cookie chrome
+3. Prefer `article`, `main`, `[role=main]`, or the densest text block
+4. Convert with turndown (ATX headings, fenced code)
+5. Collapse extra blank lines
+
+`onlyMainContent: false` keeps the full body.

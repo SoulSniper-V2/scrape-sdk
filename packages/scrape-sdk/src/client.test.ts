@@ -1,92 +1,282 @@
 import { describe, it } from "node:test";
-import assert from "node:assert";
+import assert from "node:assert/strict";
 import { createScrapeClient } from "./index.js";
-import { RateLimitError } from "./errors.js";
-import { ScrapeProvider, ScrapeResult } from "./types.js";
-import { scrapeTool } from "./ai/index.js";
+import { RateLimitError, AuthError, CapabilityError, InvalidUrlError, AllProvidersFailedError } from "./errors.js";
+import { ScrapeProvider, ScrapeResult, SearchResult } from "./types.js";
+import { htmlToMarkdown, parseHtml } from "./markdown.js";
 
-describe("ScrapeClient Core & Failover Mechanics", () => {
-  it("should successfully scrape using primary provider", async () => {
-    const mockPrimary: ScrapeProvider = {
-      name: "mock-firecrawl",
-      scrape: async (url: string): Promise<ScrapeResult> => ({
-        url,
-        title: "Mock Title",
-        markdown: "# Mock Markdown",
-        metadata: { statusCode: 200 },
-        provider: "mock-firecrawl",
-        latencyMs: 120,
-      }),
-    };
+function ok(result: Partial<ScrapeResult> & Pick<ScrapeResult, "provider">): ScrapeResult {
+  return {
+    url: "https://example.com",
+    title: "Example",
+    markdown: "# Example",
+    metadata: { statusCode: 200 },
+    latencyMs: 1,
+    ...result,
+  };
+}
 
+describe("ScrapeClient", () => {
+  it("scrapes with the primary provider", async () => {
     const client = createScrapeClient({
-      provider: mockPrimary,
-    });
-
-    const result = await client.scrape("https://example.com");
-    assert.strictEqual(result.provider, "mock-firecrawl");
-    assert.strictEqual(result.markdown, "# Mock Markdown");
-  });
-
-  it("should automatically failover to secondary provider on rate-limit (HTTP 429)", async () => {
-    let failoverTriggered = false;
-
-    const failingPrimary: ScrapeProvider = {
-      name: "failing-firecrawl",
-      scrape: async () => {
-        throw new RateLimitError("failing-firecrawl");
-      },
-    };
-
-    const workingFallback: ScrapeProvider = {
-      name: "fallback-jina",
-      scrape: async (url: string): Promise<ScrapeResult> => ({
-        url,
-        title: "Recovered Page",
-        markdown: "# Recovered from Failover",
-        metadata: { statusCode: 200 },
-        provider: "fallback-jina",
-        latencyMs: 85,
-      }),
-    };
-
-    const client = createScrapeClient({
-      provider: failingPrimary,
-      fallback: workingFallback,
-      onFailover: (_err, from, to) => {
-        failoverTriggered = true;
-        assert.strictEqual(from, "failing-firecrawl");
-        assert.strictEqual(to, "fallback-jina");
+      provider: {
+        name: "primary",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => ok({ provider: "primary", markdown: "# Hi" }),
       },
     });
-
     const result = await client.scrape("https://example.com");
-    assert.strictEqual(result.provider, "fallback-jina");
-    assert.strictEqual(result.markdown, "# Recovered from Failover");
-    assert.strictEqual(failoverTriggered, true);
+    assert.equal(result.provider, "primary");
+    assert.equal(result.markdown, "# Hi");
   });
 
-  it("should export a valid Vercel AI SDK tool definition", async () => {
-    const mockProvider: ScrapeProvider = {
-      name: "mock-ai",
-      scrape: async (url: string): Promise<ScrapeResult> => ({
-        url,
-        title: "AI Scraped",
-        markdown: "Content for LLM",
-        metadata: {},
-        provider: "mock-ai",
-        latencyMs: 50,
-      }),
-    };
+  it("rejects non-http URLs", async () => {
+    const client = createScrapeClient({
+      provider: {
+        name: "primary",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => ok({ provider: "primary" }),
+      },
+    });
+    await assert.rejects(() => client.scrape("ftp://example.com"), InvalidUrlError);
+    await assert.rejects(() => client.scrape("not-a-url"), InvalidUrlError);
+  });
 
-    const client = createScrapeClient({ provider: mockProvider });
-    const tool = scrapeTool(client);
+  it("fails over on 429 and calls onFailover", async () => {
+    let from = "";
+    let to = "";
+    const client = createScrapeClient({
+      provider: {
+        name: "firecrawl",
+        capabilities: ["scrape"],
+        cost: 50,
+        scrape: async () => {
+          throw new RateLimitError("firecrawl");
+        },
+      },
+      fallback: {
+        name: "jina",
+        capabilities: ["scrape"],
+        cost: 10,
+        scrape: async () => ok({ provider: "jina", markdown: "# recovered" }),
+      },
+      retries: 0,
+      onFailover: (_err, src, dest) => {
+        from = src;
+        to = dest;
+      },
+    });
+    const result = await client.scrape("https://example.com");
+    assert.equal(result.provider, "jina");
+    assert.equal(from, "firecrawl");
+    assert.equal(to, "jina");
+  });
 
-    assert.strictEqual(typeof tool.description, "string");
-    assert.strictEqual(typeof tool.execute, "function");
+  it("does not retry auth errors onto the same provider", async () => {
+    let calls = 0;
+    const client = createScrapeClient({
+      provider: {
+        name: "locked",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => {
+          calls += 1;
+          throw new AuthError("locked");
+        },
+      },
+      retries: 3,
+    });
+    await assert.rejects(() => client.scrape("https://example.com"), AllProvidersFailedError);
+    assert.equal(calls, 1);
+  });
 
-    const execResult: any = await tool.execute({ url: "https://example.com" });
-    assert.strictEqual(execResult.content, "Content for LLM");
-    assert.strictEqual(execResult.provider, "mock-ai");
+  it("retries retryable errors on the same provider", async () => {
+    let calls = 0;
+    const client = createScrapeClient({
+      provider: {
+        name: "flaky",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => {
+          calls += 1;
+          if (calls === 1) throw new RateLimitError("flaky");
+          return ok({ provider: "flaky" });
+        },
+      },
+      retries: 1,
+    });
+    const result = await client.scrape("https://example.com");
+    assert.equal(result.provider, "flaky");
+    assert.equal(calls, 2);
+  });
+
+  it("routes search only to providers that support it", async () => {
+    const client = createScrapeClient({
+      providers: [
+        {
+          name: "local-only",
+          capabilities: ["scrape"],
+          cost: 0,
+          scrape: async () => ok({ provider: "local-only" }),
+        },
+        {
+          name: "searcher",
+          capabilities: ["scrape", "search"],
+          cost: 10,
+          scrape: async () => ok({ provider: "searcher" }),
+          search: async (query): Promise<SearchResult> => ({
+            query,
+            results: [{ url: "https://example.com", title: "Hit", snippet: "n" }],
+            provider: "searcher",
+            latencyMs: 2,
+          }),
+        },
+      ],
+    });
+    const result = await client.search("typescript scraping");
+    assert.equal(result.provider, "searcher");
+    assert.equal(result.results[0].title, "Hit");
+  });
+
+  it("throws CapabilityError when nobody can crawl", async () => {
+    const client = createScrapeClient({
+      provider: {
+        name: "scrape-only",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => ok({ provider: "scrape-only" }),
+      },
+    });
+    await assert.rejects(() => client.crawl("https://example.com"), CapabilityError);
+  });
+
+  it("uses cost strategy to pick the cheaper scrape provider", async () => {
+    const client = createScrapeClient({
+      strategy: "cost",
+      providers: [
+        {
+          name: "expensive",
+          capabilities: ["scrape"],
+          cost: 50,
+          scrape: async () => ok({ provider: "expensive" }),
+        },
+        {
+          name: "cheap",
+          capabilities: ["scrape"],
+          cost: 0,
+          scrape: async () => ok({ provider: "cheap" }),
+        },
+      ],
+    });
+    const result = await client.scrape("https://example.com");
+    assert.equal(result.provider, "cheap");
+  });
+
+  it("caches scrape results", async () => {
+    let calls = 0;
+    const client = createScrapeClient({
+      cache: { ttlMs: 10_000 },
+      provider: {
+        name: "counted",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => {
+          calls += 1;
+          return ok({ provider: "counted" });
+        },
+      },
+    });
+    const first = await client.scrape("https://example.com");
+    const second = await client.scrape("https://example.com");
+    assert.equal(calls, 1);
+    assert.equal(first.cached, undefined);
+    assert.equal(second.cached, true);
+  });
+
+  it("scrapes a batch with bounded concurrency", async () => {
+    let inflight = 0;
+    let max = 0;
+    const client = createScrapeClient({
+      provider: {
+        name: "slow",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async (url) => {
+          inflight += 1;
+          max = Math.max(max, inflight);
+          await new Promise((r) => setTimeout(r, 20));
+          inflight -= 1;
+          return ok({ provider: "slow", url });
+        },
+      },
+    });
+    const results = await client.scrapeMany(
+      ["https://a.com", "https://b.com", "https://c.com", "https://d.com"],
+      { concurrency: 2 }
+    );
+    assert.equal(results.length, 4);
+    assert.ok(max <= 2);
+  });
+
+  it("truncates scrape output and reports charCount", async () => {
+    const client = createScrapeClient({
+      provider: {
+        name: "long",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => ok({ provider: "long", markdown: "abcdefghij" }),
+      },
+    });
+    const result = await client.scrape("https://example.com", { maxChars: 4 });
+    assert.equal(result.truncated, true);
+    assert.equal(result.charCount, 10);
+    assert.match(result.markdown, /^abcd/);
+    assert.match(result.markdown, /truncated/);
+  });
+
+  it("maps via providers that declare map", async () => {
+    const client = createScrapeClient({
+      provider: {
+        name: "mapper",
+        capabilities: ["scrape", "map"],
+        cost: 1,
+        scrape: async () => ok({ provider: "mapper" }),
+        map: async (url) => ({
+          baseUrl: url,
+          links: [`${url}/docs`],
+          provider: "mapper",
+          latencyMs: 1,
+        }),
+      },
+    });
+    const mapped = await client.map("https://example.com");
+    assert.deepEqual(mapped.links, ["https://example.com/docs"]);
   });
 });
+
+describe("markdown pipeline", () => {
+  it("extracts main content and converts to ATX markdown", () => {
+    const html = `<html lang="en"><head><title>Doc</title>
+      <meta name="description" content="About docs">
+      <link rel="canonical" href="/docs">
+      </head>
+      <body>
+        <nav>Home About</nav>
+        <article><h1>Hello</h1><p>Useful paragraph with enough text to count as main content for the extractor.</p></article>
+        <footer>copyright</footer>
+      </body></html>`;
+    const doc = parseHtml(html, "https://example.com/page", true);
+    assert.equal(doc.title, "Doc");
+    assert.equal(doc.description, "About docs");
+    assert.equal(doc.canonicalUrl, "https://example.com/docs");
+    const md = htmlToMarkdown(doc.mainHtml);
+    assert.match(md, /# Hello/);
+    assert.match(md, /Useful paragraph/);
+    assert.doesNotMatch(md, /copyright/);
+  });
+});
+
+const _providerType: ScrapeProvider | undefined = undefined;
+void _providerType;

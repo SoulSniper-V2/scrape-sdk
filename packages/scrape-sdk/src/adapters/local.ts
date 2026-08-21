@@ -1,77 +1,53 @@
-import * as cheerio from "cheerio";
-import TurndownService from "turndown";
-import { ScrapeProvider, ScrapeOptions, ScrapeResult } from "../types.js";
-import { ScrapeError } from "../errors.js";
+import { AdapterHttp, ScrapeOptions, ScrapeProvider, ScrapeResult } from "../types.js";
+import { requestText } from "../http.js";
+import { htmlToMarkdown, parseHtml } from "../markdown.js";
 
-export interface LocalConfig {
+export interface LocalConfig extends Partial<AdapterHttp> {
   userAgent?: string;
 }
 
 export function local(config: LocalConfig = {}): ScrapeProvider {
-  const turndown = new TurndownService({
-    headingStyle: "atx",
-    codeBlockStyle: "fenced",
-  });
-
-  // Remove script, style, nav, footer tags
-  turndown.remove(["script", "style", "noscript"]);
+  const fetchFn = config.fetch ?? globalThis.fetch.bind(globalThis);
 
   return {
     name: "local",
+    capabilities: ["scrape"],
+    cost: 0,
     async scrape(url: string, options?: ScrapeOptions): Promise<ScrapeResult> {
       const startTime = Date.now();
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent":
-            config.userAgent ||
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 ScrapeSDK/0.1",
-          ...(options?.headers || {}),
+      const html = await requestText(
+        fetchFn,
+        url,
+        {
+          headers: {
+            "User-Agent":
+              config.userAgent ||
+              "Mozilla/5.0 (compatible; ScrapeSDK/0.2; +https://github.com/SoulSniper-V2/scrape-sdk)",
+            Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+            ...(options?.headers || {}),
+          },
+          signal: options?.signal,
         },
-      });
+        "local"
+      );
 
-      if (!response.ok) {
-        throw new ScrapeError(`HTTP fetch failed with status ${response.status}`, "local", response.status);
-      }
-
-      const html = await response.text();
-      const $ = cheerio.load(html);
-
-      // Clean unwanted elements
-      $("script, style, noscript, nav, footer, iframe, header").remove();
-
-      const title = $("title").first().text().trim() || $("h1").first().text().trim() || "";
-      const description = $('meta[name="description"]').attr("content") || "";
-      const ogImage = $('meta[property="og:image"]').attr("content") || "";
-
-      let targetHtml = $.html();
-      if (options?.onlyMainContent) {
-        const main = $("main, article, #content, .content, .main").first();
-        if (main.length) {
-          targetHtml = main.html() || targetHtml;
-        }
-      }
-
-      const markdown = turndown.turndown(targetHtml);
-
-      const links: string[] = [];
-      if (options?.includeLinks) {
-        $("a[href]").each((_, el) => {
-          const href = $(el).attr("href");
-          if (href) links.push(href);
-        });
-      }
+      const doc = parseHtml(html, url, options?.onlyMainContent !== false);
+      const markdown = htmlToMarkdown(doc.mainHtml);
 
       return {
         url,
-        title,
+        title: doc.title,
         markdown,
-        html: options?.format === "html" ? html : undefined,
-        text: options?.format === "text" ? $("body").text().replace(/\s+/g, " ").trim() : undefined,
-        links: options?.includeLinks ? links : undefined,
+        html: options?.format === "html" ? (options.onlyMainContent === false ? doc.html : doc.mainHtml) : undefined,
+        text: options?.format === "text" ? doc.text : undefined,
+        links: options?.includeLinks ? doc.links : undefined,
+        images: options?.includeImages ? doc.images : undefined,
         metadata: {
-          description,
-          ogImage,
-          statusCode: response.status,
+          description: doc.description,
+          language: doc.language,
+          canonicalUrl: doc.canonicalUrl,
+          ogImage: doc.ogImage,
+          statusCode: 200,
         },
         provider: "local",
         latencyMs: Date.now() - startTime,

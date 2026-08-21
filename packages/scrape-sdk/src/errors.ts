@@ -19,10 +19,38 @@ export class RateLimitError extends ScrapeError {
   }
 }
 
+export class AuthError extends ScrapeError {
+  constructor(provider: string, message = "Authentication failed") {
+    super(message, provider, 401, false);
+    this.name = "AuthError";
+  }
+}
+
 export class TimeoutError extends ScrapeError {
   constructor(provider: string, timeoutMs: number) {
     super(`Request timed out after ${timeoutMs}ms`, provider, 408, true);
     this.name = "TimeoutError";
+  }
+}
+
+export class CapabilityError extends ScrapeError {
+  constructor(operation: string, provider?: string) {
+    super(
+      provider
+        ? `Provider does not support ${operation}`
+        : `No configured provider supports ${operation}`,
+      provider ?? "client",
+      undefined,
+      false
+    );
+    this.name = "CapabilityError";
+  }
+}
+
+export class InvalidUrlError extends ScrapeError {
+  constructor(value: string) {
+    super(`Invalid URL: ${value}`, "client", 400, false);
+    this.name = "InvalidUrlError";
   }
 }
 
@@ -35,4 +63,10 @@ export class AllProvidersFailedError extends Error {
     this.name = "AllProvidersFailedError";
     this.errors = errors;
   }
+}
+
+export function isRetryableError(err: unknown): boolean {
+  if (err instanceof ScrapeError) return err.isRetryable;
+  if (err instanceof Error && err.name === "AbortError") return true;
+  return false;
 }

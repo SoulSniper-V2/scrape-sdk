@@ -1,31 +1,74 @@
 ---
-title: Quickstart Walkthrough
-description: Get up and running with Scrape SDK in less than 2 minutes.
+title: Quickstart
+description: Scrape, search, crawl, and extract in a few lines.
 ---
 
-## 1. Create a client with failover
-
-Initialize the client with a primary provider and a fallback provider:
-
-```ts title="scraper.ts"
-import { createScrapeClient } from "scrape-sdk";
-import { firecrawl } from "scrape-sdk/firecrawl";
-import { jina } from "scrape-sdk/jina";
-
-export const scraper = createScrapeClient({
-  provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
-  fallback: jina(), // shifts on 429 rate limit
-});
-```
-
-## 2. Extract clean markdown
+## 1. Create a client
 
 ```ts
-const result = await scraper.scrape("https://news.ycombinator.com", {
+import { createScrapeClient, fromEnv } from "scrape-sdk";
+import { firecrawl } from "scrape-sdk/firecrawl";
+import { jina } from "scrape-sdk/jina";
+import { local } from "scrape-sdk/local";
+
+const scraper = createScrapeClient({
+  providers: [
+    firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! }),
+    jina(),
+    local(),
+  ],
+  strategy: "priority",
+  cache: { ttlMs: 60_000 },
+});
+
+// Equivalent if you export keys in the environment:
+// const scraper = fromEnv();
+```
+
+`provider` + `fallback` still works. Prefer `providers` for more than two backends.
+
+## 2. Scrape a URL
+
+```ts
+const page = await scraper.scrape("https://news.ycombinator.com", {
   format: "markdown",
   onlyMainContent: true,
 });
+console.log(page.markdown, page.provider, page.latencyMs);
+```
 
-console.log(result.markdown);
-console.log(`Extracted via ${result.provider} in ${result.latencyMs}ms`);
+Pass `maxChars` when the caller is an LLM. Agent tools default to 20_000.
+
+## 3. Search when you do not have a URL
+
+```ts
+const found = await scraper.search("firecrawl vs jina reader", { limit: 5 });
+```
+
+## 4. Map a site (URLs only)
+
+Cheaper than crawl. Needs a provider with `map` (Firecrawl).
+
+```ts
+const urls = await scraper.map("https://docs.firecrawl.dev", { limit: 80 });
+```
+
+## 5. Crawl a site
+
+Firecrawl starts a job and **polls** `GET /v2/crawl/{id}` until it completes. Spider returns pages in the crawl response.
+
+```ts
+const site = await scraper.crawl("https://docs.firecrawl.dev", { limit: 8, maxDepth: 2 });
+```
+
+## 6. Extract JSON
+
+```ts
+const data = await scraper.extract("https://firecrawl.dev", {
+  schema: {
+    type: "object",
+    properties: { mission: { type: "string" } },
+    required: ["mission"],
+  },
+});
 ```

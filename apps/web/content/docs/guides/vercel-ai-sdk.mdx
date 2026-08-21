@@ -1,22 +1,31 @@
 ---
-title: Vercel AI SDK Tools
-description: Equip LLM agents with autonomous web extraction tools.
+title: Vercel AI SDK
+description: web_fetch and web_search tools with inputSchema for generateText / streamText.
 ---
 
 ```ts
-import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { createScrapeClient } from "scrape-sdk";
-import { jina } from "scrape-sdk/jina";
-import { scrapeTool } from "scrape-sdk/ai";
+import { generateText, stepCountIs } from "ai";
+import { fromEnv } from "scrape-sdk";
+import { createTools } from "scrape-sdk/ai";
 
-const scraper = createScrapeClient({ provider: jina() });
+const scraper = fromEnv();
 
 const { text } = await generateText({
-  model: openai("gpt-4o"),
-  tools: {
-    scrape: scrapeTool(scraper),
-  },
-  prompt: "Extract the latest updates from https://news.ycombinator.com",
+  model: "openai/gpt-5.4",
+  tools: createTools(scraper),
+  stopWhen: stepCountIs(6),
+  prompt: "Summarize the latest posts on https://news.ycombinator.com",
 });
 ```
+
+`createTools` uses the names agents already know:
+
+| Tool | When |
+| :--- | :--- |
+| `web_fetch` | You have a URL. Default `maxChars` 20000. Returns `truncated` and `charCount`. |
+| `web_search` | You need to find URLs. Then fetch the best hits. |
+| `map_site` | List URLs on a site (Firecrawl). |
+| `crawl_site` | Many page bodies. Expensive; prefer map + fetch. |
+| `extract_json` | Structured fields via JSON Schema. |
+
+Each tool uses Zod `inputSchema` (AI SDK 5/6). There is no `parameters` field. Search/map/crawl/extract are omitted when the client cannot do them.

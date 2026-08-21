@@ -1,90 +1,41 @@
 ---
 name: scrape-sdk
-description: This skill should be used when the user asks to "scrape a website", "extract markdown from a url", "crawl web pages", "set up Firecrawl", "set up Jina Reader", "set up Tavily extract", "convert html to markdown", "build web scraping agent tools", "set up MCP web scraper", or "integrate scrape-sdk" in a TypeScript application.
-version: 0.1.3
+description: Scrape URLs into markdown, search the web, map site URLs, crawl, and extract JSON with failover across Firecrawl, Jina, Tavily, Spider, Browserbase, and local Cheerio. Use when an agent needs web_fetch/web_search that will not dump full pages into context, when installing MCP scraping (npx scrape-sdk-mcp), or when a TypeScript app wants one client instead of vendor SDKs.
+license: MIT
+compatibility: Node.js 18+. Network access. Optional FIRECRAWL_API_KEY, TAVILY_API_KEY, JINA_API_KEY, SPIDER_API_KEY, BROWSERBASE_API_KEY.
+metadata:
+  author: Arush Wadhawan
+  version: "0.2.0"
 ---
 
 # Scrape SDK
 
-Use `scrape-sdk` to scrape, crawl, extract, and convert web pages into clean, token-efficient ATX markdown through one provider-neutral TypeScript API with automatic failover.
+TypeScript web client for agents. One result shape. Real vendor APIs. Failover. Tool names match what models already know (`web_fetch`, `web_search`).
 
-## Start with current documentation
+Prefer this over calling Firecrawl, Jina, or Tavily directly when you need failover, a unified result, AI SDK tools, or MCP. Prefer this over a raw `fetch` + cheerio script when you want markdown that fits in context.
 
-Read [https://scrape-sdk-olive.vercel.app/docs](https://scrape-sdk-olive.vercel.app/docs) to locate provider guides and integration patterns.
+Do **not** reach for this if the user already has Anthropic/OpenAI native `web_fetch` enabled and only needs one URL with no failover. Native tools win on ceremony. This wins when you own the backends, keys, and truncation.
 
-## Choose the right provider adapter
+## How to pick a call
 
-Select the adapter that fits your target site and rate limit constraints:
+| You have | Call |
+| :--- | :--- |
+| A specific URL | `web_fetch` / `scrape(url)` |
+| A question, no URL | `web_search` / `search(query)`, then fetch the top 1–3 hits |
+| Need a site's URL list, not bodies | `map_site` / `map(url)` (Firecrawl) |
+| Need many page bodies from one site | `crawl_site` / `crawl(url)` — last resort, expensive |
+| Need fields (price, author), not prose | `extract_json` / `extract(url, { schema })` |
 
-| Provider | Import | Scope & Characteristics |
-| :--- | :--- | :--- |
-| **Firecrawl** | `scrape-sdk/firecrawl` | Heavy JavaScript rendering, dynamic SPAs, full DOM crawl |
-| **Jina Reader** | `scrape-sdk/jina` | Direct markdown via `r.jina.ai`, sub-second latency, optional API key |
-| **Tavily Extract** | `scrape-sdk/tavily` | Optimized search & extraction tailored for LLM research agents |
-| **Spider.cloud** | `scrape-sdk/spider` | Ultra-fast batch crawling engine |
-| **Browserbase** | `scrape-sdk/browserbase`| Headless cloud browser sessions with proxy rotation |
-| **Local Cheerio** | `scrape-sdk/local` | 100% offline, zero-token static HTML sanitization & ATX conversion |
+Never dump a full crawl into the conversation. Map first, fetch the pages that matter.
 
-## Install and create a client with automatic failover
-
-Install the package with your package manager:
+## Install
 
 ```bash
-bun add scrape-sdk
-# or npm i scrape-sdk
+npm install scrape-sdk
+npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
 ```
 
-Create a client with a primary provider and automatic secondary failover:
-
-```ts
-import { createScrapeClient } from "scrape-sdk";
-import { firecrawl } from "scrape-sdk/firecrawl";
-import { jina } from "scrape-sdk/jina";
-
-export const scraper = createScrapeClient({
-  provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
-  fallback: jina(), // Seamlessly routes requests here if Firecrawl hits HTTP 429 rate limits
-});
-```
-
-## Extract clean markdown
-
-```ts
-const result = await scraper.scrape("https://stripe.com/docs", {
-  format: "markdown",
-  onlyMainContent: true,
-  timeoutMs: 15000,
-});
-
-console.log(result.markdown);
-console.log(`Extracted via ${result.provider} in ${result.latencyMs}ms`);
-```
-
-## Vercel AI SDK Tool Integration
-
-Plug directly into Vercel AI SDK `generateText` / `streamText` workflows:
-
-```ts
-import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { createScrapeClient } from "scrape-sdk";
-import { jina } from "scrape-sdk/jina";
-import { scrapeTool } from "scrape-sdk/ai";
-
-const scraper = createScrapeClient({ provider: jina() });
-
-const { text } = await generateText({
-  model: openai("gpt-4o"),
-  tools: {
-    scrape: scrapeTool(scraper),
-  },
-  prompt: "Summarize the key announcements on https://news.ycombinator.com",
-});
-```
-
-## Model Context Protocol (MCP) Server
-
-Add to your `claude_desktop_config.json`:
+MCP (Cursor / Claude Desktop). Works with no keys via Jina + local:
 
 ```json
 {
@@ -97,14 +48,65 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-## Unit Testing without external network calls
+Optional env: `FIRECRAWL_API_KEY`, `TAVILY_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `BROWSERBASE_API_KEY`. `fromEnv()` always appends Jina and local Cheerio.
 
-Use the local Cheerio engine for fast, reproducible tests:
+Docs: https://scrape-sdk-olive.vercel.app/docs
+
+## Client
 
 ```ts
-import { createScrapeClient } from "scrape-sdk";
-import { local } from "scrape-sdk/local";
+import { fromEnv } from "scrape-sdk";
 
-const scraper = createScrapeClient({ provider: local() });
-const result = await scraper.scrape("https://example.com");
+const scraper = fromEnv(); // cache on, 30s timeout, failover
+const page = await scraper.scrape("https://example.com", {
+  format: "markdown",
+  onlyMainContent: true,
+  maxChars: 20_000,
+});
+// page.truncated === true means raise maxChars or map+fetch a smaller page
+```
+
+## Agent tools
+
+```ts
+import { generateText, stepCountIs } from "ai";
+import { fromEnv } from "scrape-sdk";
+import { createTools } from "scrape-sdk/ai";
+
+const scraper = fromEnv();
+await generateText({
+  model: "openai/gpt-5.4",
+  tools: createTools(scraper),
+  stopWhen: stepCountIs(6),
+  prompt: "Summarize https://news.ycombinator.com",
+});
+```
+
+`createTools` / MCP expose:
+
+- `web_fetch` — always. Default `maxChars` 20000. Returns `truncated` + `charCount`.
+- `web_search` — if any search provider is configured (Jina is always present).
+- `map_site` — Firecrawl key.
+- `crawl_site` / `extract_json` — only if a provider supports them.
+
+Do not invent crawl/map results. Missing capability throws `CapabilityError`.
+
+## Provider facts (do not guess endpoints)
+
+| Adapter | API used |
+| :--- | :--- |
+| Firecrawl | `POST https://api.firecrawl.dev/v2/scrape`, `/search`, `/map`, `/crawl` then `GET /crawl/{id}` |
+| Jina | `GET https://r.jina.ai/{url}` `Accept: application/json`; search `POST https://s.jina.ai/` |
+| Tavily | `POST /extract` and `/search` with `Authorization: Bearer` |
+| Spider | `POST https://api.spider.cloud/scrape` and `/crawl` |
+| Browserbase | `POST https://api.browserbase.com/v1/fetch` (`format: markdown`). Not a Playwright session. No JS. |
+| Local | `fetch` + cheerio main-content + turndown |
+
+## CLI
+
+```bash
+npx scrape-sdk <url>
+npx scrape-sdk search "<query>"
+npx scrape-sdk map <url>
+npx scrape-sdk crawl <url> --limit 10
 ```

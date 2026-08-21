@@ -1,13 +1,14 @@
 ---
-title: How It Works Pipeline
-description: Inside the 4-stage extraction and sanitization pipeline.
+title: How it works
+description: Routing, retries, timeouts, and capabilities.
 ---
 
-Scrape SDK acts as a resilient buffer between your autonomous AI agents and edge scraping providers.
+1. **Validate** the URL (`http` / `https` only).
+2. **Select** providers that advertise the required capability (`scrape`, `search`, `crawl`, `extract`, `js`).
+3. **Order** them by `strategy`: `priority` (config order) or `cost` (cheaper first).
+4. **Execute** with an `AbortSignal` timeout. Retryable errors (429, 5xx, timeout) retry on the same provider, then fail over. Auth errors (401/403) do not retry.
+5. **Return** a unified result, or `AllProvidersFailedError` / `CapabilityError`.
 
-## The 4-Stage Extraction Pipeline
+Local Cheerio is the only adapter that sanitizes HTML itself. Cloud adapters return the vendor's markdown.
 
-1. **Validation & Normalization**: Validates the URL format, applies standardized headers, and bounds request execution with a timeout.
-2. **Primary Provider Execution**: Calls the configured primary adapter with structured options.
-3. **Automatic Failover**: If HTTP 429, 502, or timeout occurs, routes to secondary fallback provider before throwing an error.
-4. **DOM Sanitization & AST Formatting**: Strips JavaScript tags, CSS styles, and navigation chrome, converting the DOM into token-dense ATX markdown.
+There is no fake Browserbase page content and no crawl that pretends POST `/crawl` already contains pages.

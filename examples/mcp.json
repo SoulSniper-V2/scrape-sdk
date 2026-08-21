@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "scrape-sdk": {
+      "command": "npx",
+      "args": ["-y", "scrape-sdk-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": "fc-...",
+        "TAVILY_API_KEY": "tvly-...",
+        "JINA_API_KEY": "jina_..."
+      }
+    }
+  }
+}

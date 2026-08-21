@@ -31,15 +31,25 @@ jobs:
 
       - name: Publish to npm
         run: |
+          publish_if_new() {
+            local dir="$1"
+            local name
+            name=$(node -p "require('./package.json').name")
+            local ver
+            ver=$(node -p "require('./package.json').version")
+            if npm view "${name}@${ver}" version --json >/dev/null 2>&1; then
+              echo "::notice ::${name}@${ver} already published. Skipping."
+            else
+              echo "Publishing ${name}@${ver}..."
+              npm publish --access public
+            fi
+          }
+
           cd packages/scrape-sdk
-          CURRENT_VER=$(node -p "require('./package.json').version")
-          
-          # Check if this exact version already exists on npm
-          if npm view "scrape-sdk@${CURRENT_VER}" version --json >/dev/null 2>&1; then
-            echo "::notice ::Version ${CURRENT_VER} is already published on npm. Skipping duplicate publish."
-          else
-            echo "Publishing release version ${CURRENT_VER} to npm registry..."
-            npm publish --access public
-          fi
+          publish_if_new .
+          cd ../mcp-server
+          npm install
+          npm run build
+          publish_if_new .
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

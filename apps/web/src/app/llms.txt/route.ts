@@ -3,22 +3,20 @@ export const revalidate = false;
 export function GET() {
   const content = `# Scrape SDK
 
-> Scrape, crawl, and extract clean markdown across Firecrawl, Jina Reader, Tavily, Spider.cloud, Browserbase, and Local Cheerio with one unified TypeScript API and automatic failover.
+> TypeScript client for scrape, search, crawl, and extract across Firecrawl v2, Jina, Tavily, Spider, Browserbase Fetch, and local Cheerio.
 
 ## Agent Resources
 
-- [Complete Documentation](https://scrape-sdk-olive.vercel.app/llms-full.txt): All documentation in one file.
-- [Install Scrape SDK Skill](https://github.com/SoulSniper-V2/scrape-sdk/tree/main/skills/scrape-sdk): \`npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk\`
-- [Source Code](https://github.com/SoulSniper-V2/scrape-sdk): Package source, providers, tests, and examples.
+- [Complete Documentation](https://scrape-sdk-olive.vercel.app/llms-full.txt)
+- [Skill](https://github.com/SoulSniper-V2/scrape-sdk/tree/main/skills/scrape-sdk): \`npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk\`
+- [Source](https://github.com/SoulSniper-V2/scrape-sdk)
 
-## Product Facts
+## Facts
 
-- Package: \`scrape-sdk\`
-- License: MIT
-- Runtime: Server-side Node.js 20+ or Bun
-- Language: TypeScript
-- Supported Providers: Firecrawl, Jina Reader, Tavily Extract, Spider.cloud, Browserbase, Local Cheerio
-- Failover: Automatic secondary adapter execution upon HTTP 429 rate limits or timeouts
+- Package: scrape-sdk 0.2
+- MCP: npx scrape-sdk-mcp (official MCP SDK)
+- Tools: createTools() → web_fetch, web_search (map_site / crawl_site / extract_json when capable)
+- Fetch default maxChars: 20000 (truncated + charCount)
 
 ## Quickstart
 
@@ -26,16 +24,18 @@ export function GET() {
 import { createScrapeClient } from "scrape-sdk";
 import { firecrawl } from "scrape-sdk/firecrawl";
 import { jina } from "scrape-sdk/jina";
+import { local } from "scrape-sdk/local";
 
-export const scraper = createScrapeClient({
-  provider: firecrawl({ apiKey: process.env.FIRECRAWL_KEY }),
-  fallback: jina(),
+const scraper = createScrapeClient({
+  providers: [
+    firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! }),
+    jina(),
+    local(),
+  ],
 });
 
-const result = await scraper.scrape("https://stripe.com", {
-  format: "markdown",
-  onlyMainContent: true,
-});
+await scraper.scrape("https://stripe.com", { format: "markdown" });
+await scraper.search("firecrawl vs jina");
 \`\`\`
 `;
 

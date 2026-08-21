@@ -1,63 +1,111 @@
 #!/usr/bin/env node
 import { createScrapeClient } from "../index.js";
+import { fromEnv } from "../from-env.js";
+import { ScrapeClient } from "../client.js";
 import { jina } from "../adapters/jina.js";
 import { local } from "../adapters/local.js";
 import { firecrawl } from "../adapters/firecrawl.js";
+import { tavily } from "../adapters/tavily.js";
 
-async function main() {
-  const args = process.argv.slice(2);
-  if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
-    console.log(`
-⚡ Scrape SDK CLI
+function help(): void {
+  console.log(`
+scrape-sdk — scrape, search, and crawl the web
 
 Usage:
-  npx scrape-sdk <url> [options]
+  npx scrape-sdk <url>
+  npx scrape-sdk scrape <url> [--format markdown|html|text] [--json] [--provider jina|local|firecrawl|tavily]
+  npx scrape-sdk search <query> [--json]
+  npx scrape-sdk crawl <url> [--limit 10] [--json]
+  npx scrape-sdk map <url> [--limit 100] [--json]
+  npx scrape-sdk mcp
 
-Options:
-  --format <markdown|html|text>  Output format (default: markdown)
-  --provider <jina|local|firecrawl>  Specify provider (default: jina with local failover)
-  --json                         Output entire result as JSON
-  --help, -h                     Show this help message
-
-Examples:
-  npx scrape-sdk https://stripe.com
-  npx scrape-sdk https://news.ycombinator.com --format text
-  npx scrape-sdk https://github.com/trending --json
+Environment:
+  FIRECRAWL_API_KEY, TAVILY_API_KEY, JINA_API_KEY, SPIDER_API_KEY, BROWSERBASE_API_KEY
 `);
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
+    help();
     process.exit(0);
   }
 
-  const url = args.find((a) => a.startsWith("http://") || a.startsWith("https://"));
-  if (!url) {
-    console.error("Error: Please provide a valid URL.");
+  if (args[0] === "mcp") {
+    console.error("Start the MCP server with: npx scrape-sdk-mcp");
     process.exit(1);
   }
 
-  const formatIdx = args.indexOf("--format");
-  const format = formatIdx !== -1 ? (args[formatIdx + 1] as any) : "markdown";
-
-  const isJson = args.includes("--json");
-
-  const firecrawlKey = process.env.FIRECRAWL_KEY || process.env.FIRECRAWL_API_KEY;
-  const primary = firecrawlKey ? firecrawl({ apiKey: firecrawlKey }) : jina();
-
-  const client = createScrapeClient({
-    provider: primary,
-    fallback: local(),
-  });
+  const command = ["scrape", "search", "crawl", "map"].includes(args[0]) ? args[0] : "scrape";
+  const rest = command === args[0] ? args.slice(1) : args;
+  const jsonOut = rest.includes("--json");
+  const client = buildClient(rest);
 
   try {
-    const result = await client.scrape(url, { format, onlyMainContent: true });
-
-    if (isJson) {
-      console.log(JSON.stringify(result, null, 2));
-    } else {
-      console.log(result.markdown || result.text || result.html);
+    if (command === "search") {
+      const query = rest.filter((a) => !a.startsWith("--") && a !== "jina" && a !== "local" && a !== "firecrawl" && a !== "tavily" && a !== "markdown" && a !== "html" && a !== "text").join(" ").trim();
+      if (!query) throw new Error("Provide a search query");
+      const result = await client.search(query);
+      print(jsonOut ? result : result.results.map((r) => `- ${r.title}\n  ${r.url}\n  ${r.snippet}`).join("\n\n") || "No results");
+      return;
     }
-  } catch (err: any) {
-    console.error(`Scrape failed: ${err.message}`);
+
+    const url = rest.find((a) => a.startsWith("http://") || a.startsWith("https://"));
+    if (!url) throw new Error("Provide a valid http(s) URL");
+
+    if (command === "map") {
+      const limitIdx = rest.indexOf("--limit");
+      const limit = limitIdx !== -1 ? Number(rest[limitIdx + 1]) : 100;
+      const result = await client.map(url, { limit });
+      print(jsonOut ? result : result.links.join("\n") || "No links");
+      return;
+    }
+
+    if (command === "crawl") {
+      const limitIdx = rest.indexOf("--limit");
+      const limit = limitIdx !== -1 ? Number(rest[limitIdx + 1]) : 10;
+      const result = await client.crawl(url, { limit });
+      print(jsonOut ? result : result.pages.map((p) => `# ${p.title}\n${p.url}\n\n${p.markdown}`).join("\n\n---\n\n"));
+      return;
+    }
+
+    const formatIdx = rest.indexOf("--format");
+    const format = (formatIdx !== -1 ? rest[formatIdx + 1] : "markdown") as "markdown" | "html" | "text";
+    const result = await client.scrape(url, { format, onlyMainContent: true });
+    print(jsonOut ? result : result.markdown || result.text || result.html || "");
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`scrape-sdk: ${message}`);
     process.exit(1);
   }
 }
 
-main().catch(console.error);
+function buildClient(args: string[]): ScrapeClient {
+  const providerIdx = args.indexOf("--provider");
+  const named = providerIdx !== -1 ? args[providerIdx + 1] : undefined;
+  if (!named) return fromEnv({ cache: false });
+
+  if (named === "local") return createScrapeClient({ provider: local() });
+  if (named === "jina") return createScrapeClient({ provider: jina({ apiKey: process.env.JINA_API_KEY }), fallback: local() });
+  if (named === "firecrawl") {
+    const key = process.env.FIRECRAWL_API_KEY || process.env.FIRECRAWL_KEY;
+    if (!key) throw new Error("FIRECRAWL_API_KEY is required for --provider firecrawl");
+    return createScrapeClient({ provider: firecrawl({ apiKey: key }), fallback: [jina(), local()] });
+  }
+  if (named === "tavily") {
+    const key = process.env.TAVILY_API_KEY;
+    if (!key) throw new Error("TAVILY_API_KEY is required for --provider tavily");
+    return createScrapeClient({ provider: tavily({ apiKey: key }), fallback: [jina(), local()] });
+  }
+  throw new Error(`Unknown provider: ${named}`);
+}
+
+function print(value: unknown): void {
+  if (typeof value === "string") console.log(value);
+  else console.log(JSON.stringify(value, null, 2));
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

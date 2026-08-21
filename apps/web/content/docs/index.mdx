@@ -1,39 +1,39 @@
 ---
 title: TypeScript Scrape SDK
-description: Add, crawl, extract, and convert web pages to clean markdown across all providers with one TypeScript API.
+description: Scrape, search, crawl, and extract with one TypeScript client across Firecrawl, Jina, Tavily, Spider, Browserbase Fetch, and local Cheerio.
 ---
 
-Scrape SDK handles the web scraping and token sanitization lifecycle across Firecrawl, Jina Reader, Tavily, Spider.cloud, Browserbase, and Local Cheerio. Pass a URL, receive structured ATX markdown, and let the multi-tier failover engine recover before your AI agent rate-limits.
+Scrape SDK is a provider-neutral web client for TypeScript agents. It talks to real vendor APIs, fails over on retryable errors, and returns one typed result shape.
 
 ```ts title="scraper.ts"
 import { createScrapeClient } from "scrape-sdk";
 import { firecrawl } from "scrape-sdk/firecrawl";
 import { jina } from "scrape-sdk/jina";
+import { local } from "scrape-sdk/local";
 
 export const scraper = createScrapeClient({
-  provider: firecrawl({
-    apiKey: process.env.FIRECRAWL_KEY!,
-  }),
-  fallback: jina(), // Seamlessly routes requests if primary hits HTTP 429
+  providers: [
+    firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! }),
+    jina(),
+    local(),
+  ],
 });
 
-const result = await scraper.scrape("https://stripe.com/docs", {
+const page = await scraper.scrape("https://stripe.com/docs", {
   format: "markdown",
   onlyMainContent: true,
 });
-
-console.log(result.markdown);
 ```
 
-Use Scrape SDK when your application or AI pipeline needs token-efficient markdown, structured page metadata, and provider-independent failover. It keeps scraping quirks at the boundary of your system.
+Use `search()` when you do not have a URL, `crawl()` for a site, and `extract()` for JSON Schema. Providers that cannot perform an operation are skipped.
 
 ## Read next
 
 <Cards>
-  <Card title="Install Scrape SDK" href="/docs/installation" description="Package manager installation and Skills CLI." />
-  <Card title="Compare providers" href="/docs/providers" description="Firecrawl vs Jina vs Tavily vs Local Cheerio." />
-  <Card title="Build an AI scraping tool" href="/docs/guides/vercel-ai-sdk" description="Equip LLMs with autonomous web extraction tools." />
-  <Card title="Understand the failover lifecycle" href="/docs/concepts/failover-matrix" description="Automatic secondary adapter execution." />
-  <Card title="Use the markdown cleaner" href="/docs/concepts/markdown-pipeline" description="Zero-token HTML DOM sanitization." />
-  <Card title="Browse the API reference" href="/docs/api-reference/create-scrape-client" description="Method signatures and return types." />
+  <Card title="Install" href="/docs/installation" description="npm, CLI, and the agent skill." />
+  <Card title="Quickstart" href="/docs/quickstart" description="scrape, search, crawl, extract." />
+  <Card title="Providers" href="/docs/providers" description="What each adapter actually calls." />
+  <Card title="AI SDK tools" href="/docs/guides/vercel-ai-sdk" description="createTools() with inputSchema." />
+  <Card title="MCP" href="/docs/guides/model-context-protocol" description="Official SDK stdio server." />
+  <Card title="API" href="/docs/api-reference/create-scrape-client" description="Client config and methods." />
 </Cards>

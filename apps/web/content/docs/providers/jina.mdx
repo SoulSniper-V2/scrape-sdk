@@ -1,20 +1,12 @@
 ---
-title: Jina Reader Provider
-description: Sub-second direct markdown extraction via r.jina.ai with zero required API keys.
+title: Jina Reader
+description: r.jina.ai scrape and s.jina.ai search.
 ---
 
-## Scope and Credentials
-
-Import the adapter directly from `scrape-sdk/jina`:
-
-```ts title="scraper.ts"
-import { createScrapeClient } from "scrape-sdk";
+```ts
 import { jina } from "scrape-sdk/jina";
 
-export const scraper = createScrapeClient({
-  provider: jina(),
-});
-
-const result = await scraper.scrape("https://example.com");
-console.log(result.markdown);
+jina({ apiKey: process.env.JINA_API_KEY }) // key optional for light use
 ```
+
+Scrape uses `GET https://r.jina.ai/{url}` with `Accept: application/json` (not SSE). Search uses `POST https://s.jina.ai/` with `{ q }`.

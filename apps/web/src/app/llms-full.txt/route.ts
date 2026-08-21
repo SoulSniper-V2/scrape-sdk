@@ -1,46 +1,45 @@
 export const revalidate = false;
 
 export function GET() {
-  const content = `# Scrape SDK - Full Documentation
+  const content = `# Scrape SDK
 
-## Overview
-Scrape SDK provides a single typed contract for all major web scraping engines (Firecrawl, Jina Reader, Tavily, Spider, Browserbase, Local Cheerio) with automatic failover, Vercel AI SDK tools, and Model Context Protocol (MCP) server support.
+TypeScript web client: scrape, search, crawl, extract.
 
-## Installation
-\`\`\`bash
-bun add scrape-sdk
-# or
-npm install scrape-sdk
-\`\`\`
+Install: npm install scrape-sdk
 
-## Install Agent Skill (for Claude, Cursor, Antigravity, Hermes)
-\`\`\`bash
-npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
-# Add -g to install globally across all projects
-npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk -g
-\`\`\`
-
-## Providers
-- **Firecrawl**: JavaScript SPA rendering and deep site crawling.
-- **Jina Reader**: Zero-config fast markdown extraction via r.jina.ai.
-- **Tavily Extract**: Optimized search & extract for autonomous LLM research pipelines.
-- **Local Cheerio**: Zero-token static DOM cleaner and ATX markdown parser.
-
-## Vercel AI SDK
 \`\`\`ts
-import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { createScrapeClient } from "scrape-sdk";
+import { createScrapeClient, fromEnv } from "scrape-sdk";
+import { firecrawl } from "scrape-sdk/firecrawl";
 import { jina } from "scrape-sdk/jina";
-import { scrapeTool } from "scrape-sdk/ai";
+import { local } from "scrape-sdk/local";
+import { createTools } from "scrape-sdk/ai";
 
-const scraper = createScrapeClient({ provider: jina() });
-const { text } = await generateText({
-  model: openai("gpt-4o"),
-  tools: { scrape: scrapeTool(scraper) },
-  prompt: "Extract https://news.ycombinator.com",
+const scraper = createScrapeClient({
+  providers: [
+    firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! }),
+    jina(),
+    local(),
+  ],
 });
+
+await scraper.scrape("https://example.com");
+await scraper.search("query");
+await scraper.crawl("https://docs.example.com", { limit: 10 });
+await scraper.extract("https://example.com", { schema: { type: "object", properties: { title: { type: "string" } } } });
 \`\`\`
+
+Adapters talk to real APIs:
+- Firecrawl v2 scrape/search/map/crawl (poll GET /crawl/{id})
+- Jina r.jina.ai JSON + s.jina.ai search
+- Tavily Bearer /extract and /search
+- Spider /scrape and /crawl
+- Browserbase POST /v1/fetch (not a browser session)
+- Local cheerio+turndown
+
+MCP: npx -y scrape-sdk-mcp
+Tools: web_fetch, web_search, map_site, crawl_site, extract_json
+web_fetch defaults to 20000 chars and returns truncated + charCount
+AI: createTools(scraper) uses inputSchema
 `;
 
   return new Response(content, {

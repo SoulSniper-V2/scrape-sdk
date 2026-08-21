@@ -12,6 +12,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@types/mdx": "^2.0.14",
     "cheerio": "^1.0.0",
+    "scrape-sdk": "*",
     "clsx": "^2.1.1",
     "fumadocs-core": "^16.14.5",
     "fumadocs-mdx": "^15.3.0",

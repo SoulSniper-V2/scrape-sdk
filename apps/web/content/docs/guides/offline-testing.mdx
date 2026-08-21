@@ -1,20 +1,21 @@
 ---
-title: Test Without Network Calls
-description: Run test suites with zero API keys and zero network latency.
+title: Offline testing
+description: Inject fetch or use the local adapter.
 ---
 
 ```ts
-import { describe, it, expect } from "bun:test";
 import { createScrapeClient } from "scrape-sdk";
 import { local } from "scrape-sdk/local";
 
-describe("Web scraper pipeline", () => {
-  it("extracts clean markdown offline", async () => {
-    const scraper = createScrapeClient({ provider: local() });
-    const result = await scraper.scrape("https://example.com");
-    
-    expect(result.provider).toBe("local");
-    expect(result.markdown).toContain("# Example Domain");
-  });
+const scraper = createScrapeClient({
+  provider: local({
+    fetch: async (url) => new Response("<html><article><h1>Hi</h1></article></html>", {
+      headers: { "content-type": "text/html" },
+    }),
+  }),
 });
+
+const page = await scraper.scrape("https://example.com");
 ```
+
+Every adapter accepts `fetch` in its config so tests can pin real request URLs and JSON shapes without the network.

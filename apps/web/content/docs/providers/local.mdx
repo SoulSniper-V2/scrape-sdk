@@ -1,20 +1,12 @@
 ---
-title: Local Cheerio Provider
-description: 100% offline, zero-token static HTML sanitization & Turndown ATX markdown conversion.
+title: Local Cheerio
+description: Static HTML to markdown with no API key.
 ---
 
-## Scope and Credentials
-
-Import the adapter directly from `scrape-sdk/local`:
-
-```ts title="scraper.ts"
-import { createScrapeClient } from "scrape-sdk";
+```ts
 import { local } from "scrape-sdk/local";
 
-export const scraper = createScrapeClient({
-  provider: local(),
-});
-
-const result = await scraper.scrape("https://example.com");
-console.log(result.markdown);
+local()
 ```
+
+`fetch` + cheerio main-content selection (`article` / `main` / densest block) + turndown ATX markdown. No JavaScript rendering. Good as last fallback and for tests.

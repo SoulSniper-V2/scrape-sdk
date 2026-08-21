@@ -1,157 +1,30 @@
 ---
-title: Model Context Protocol (MCP)
-description: Connect Scrape SDK directly to Claude Desktop, Cursor, Claude Code, and Windsurf as a native live-scraping tool.
+title: Model Context Protocol
+description: Official MCP SDK stdio server with web_fetch and web_search.
 ---
 
-The **Model Context Protocol (MCP)** server allows AI desktop applications and IDEs to execute live web extraction during your conversations without writing any glue code.
-
-```json title="claude_desktop_config.json"
-{
-  "mcpServers": {
-    "scrape-sdk": {
-      "command": "npx",
-      "args": ["-y", "scrape-sdk-mcp"]
-    }
-  }
-}
-```
-
----
-
-## Zero-Configuration Mode (No API Keys Needed)
-
-`scrape-sdk-mcp` is designed to work **100% out-of-the-box**. 
-
-If you do not specify any environment variables or API keys, the server automatically routes requests to **Jina Reader** (`r.jina.ai`) with secondary failover to the offline **Local Cheerio** engine. You get instant, sub-second markdown extraction immediately.
-
----
-
-## Client Setup Guides
-
-<Tabs items={["Claude Desktop", "Cursor IDE", "Windsurf / Hermes"]}>
-  <Tab value="Claude Desktop">
-
-### macOS Configuration
-Open `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-```json
+```json title="mcp.json"
 {
   "mcpServers": {
     "scrape-sdk": {
       "command": "npx",
       "args": ["-y", "scrape-sdk-mcp"],
       "env": {
-        "FIRECRAWL_API_KEY": "fc-your-api-key-here"
+        "FIRECRAWL_API_KEY": "fc-...",
+        "TAVILY_API_KEY": "tvly-...",
+        "JINA_API_KEY": "jina_..."
       }
     }
   }
 }
 ```
 
-### Windows Configuration
-Open `%APPDATA%\\Claude\\claude_desktop_config.json`:
+A copy lives at `examples/mcp.json`. The skill at `skills/scrape-sdk/` ships a sibling `mcp.json` so skill hosts can auto-attach the server.
 
-```json
-{
-  "mcpServers": {
-    "scrape-sdk": {
-      "command": "npx",
-      "args": ["-y", "scrape-sdk-mcp"]
-    }
-  }
-}
-```
+Built with `@modelcontextprotocol/sdk` (`McpServer` + `StdioServerTransport`), so Claude Desktop and Cursor get a real `initialize` handshake.
 
-Restart Claude Desktop. You will see the **hammer icon** 🔨 indicating `scrape_web` is active.
+Without keys, `web_fetch` and `web_search` still work via Jina + local. `map_site` / `crawl_site` / `extract_json` appear when a configured provider supports them.
 
-  </Tab>
+`web_fetch` truncates to 20_000 characters by default and returns `truncated` + `charCount`. Raise `maxChars` only when you need the rest of a page.
 
-  <Tab value="Cursor IDE">
-
-Add to your project root at `.cursor/mcp.json` or in **Cursor Settings > Features > MCP**:
-
-```json
-{
-  "mcpServers": {
-    "scrape-sdk": {
-      "command": "npx",
-      "args": ["-y", "scrape-sdk-mcp"],
-      "env": {
-        "FIRECRAWL_API_KEY": "fc-your-key",
-        "TAVILY_API_KEY": "tvly-your-key"
-      }
-    }
-  }
-}
-```
-
-Cursor Composer and Agent mode will now automatically scrape URLs referenced in your coding prompts.
-
-  </Tab>
-
-  <Tab value="Windsurf / Hermes">
-
-Add to `~/.codeium/windsurf/mcp_config.json` or your agent runtime configuration:
-
-```json
-{
-  "mcpServers": {
-    "scrape-sdk": {
-      "command": "npx",
-      "args": ["-y", "scrape-sdk-mcp"]
-    }
-  }
-}
-```
-
-  </Tab>
-</Tabs>
-
----
-
-## Configuring API Keys via "env"
-
-To enable dynamic JavaScript rendering with Firecrawl or entity extraction with Tavily, pass your credentials in the `"env"` object:
-
-| Environment Variable | Description | Fallback Behavior |
-| :--- | :--- | :--- |
-| `FIRECRAWL_API_KEY` | Enables Firecrawl v1 JS rendering engine | Falls back to Jina if missing or 429 rate-limited |
-| `TAVILY_API_KEY` | Enables Tavily raw research extraction | Falls back to Jina if missing |
-| `DEFAULT_PROVIDER` | Set primary default (`"firecrawl"`, `"jina"`, `"tavily"`, `"local"`) | Defaults to `"firecrawl"` if key exists, else `"jina"` |
-
----
-
-## Tool Interface: scrape_web
-
-When connected, the AI agent is equipped with the following tool signature:
-
-```json
-{
-  "name": "scrape_web",
-  "description": "Scrape any webpage and extract clean token-optimized ATX markdown with multi-provider failover.",
-  "parameters": {
-    "url": {
-      "type": "string",
-      "description": "The target HTTP or HTTPS webpage URL."
-    },
-    "format": {
-      "type": "string",
-      "enum": ["markdown", "html", "text"],
-      "default": "markdown"
-    }
-  },
-  "required": ["url"]
-}
-```
-
----
-
-## Example Agent Prompts
-
-Once configured, simply paste any link into your conversation:
-
-* *"Summarize the release notes at `https://nextjs.org/blog/next-15`."*
-* *"Read `https://docs.stripe.com/api` and write me a TypeScript helper to create subscription webhooks."*
-* *"Extract the pricing table from `https://resend.com/pricing` and output it as a JSON schema."*
-
-The model will automatically invoke `scrape_web`, receive clean ATX markdown with 0 token bloat, and generate your response.
+`fromEnv()` reads `FIRECRAWL_API_KEY` (or `FIRECRAWL_KEY`), `TAVILY_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `BROWSERBASE_API_KEY`.

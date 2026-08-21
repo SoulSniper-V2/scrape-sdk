@@ -1,0 +1,6 @@
+{
+  "scrape-sdk": {
+    "command": "npx",
+    "args": ["-y", "scrape-sdk-mcp"]
+  }
+}

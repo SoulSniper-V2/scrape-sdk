@@ -1,20 +1,12 @@
 ---
-title: Tavily Extract Provider
-description: Optimized raw content extraction tailored for autonomous LLM research pipelines.
+title: Tavily
+description: Extract and search with Bearer auth.
 ---
 
-## Scope and Credentials
-
-Import the adapter directly from `scrape-sdk/tavily`:
-
-```ts title="scraper.ts"
-import { createScrapeClient } from "scrape-sdk";
+```ts
 import { tavily } from "scrape-sdk/tavily";
 
-export const scraper = createScrapeClient({
-  provider: tavily(),
-});
-
-const result = await scraper.scrape("https://example.com");
-console.log(result.markdown);
+tavily({ apiKey: process.env.TAVILY_API_KEY! })
 ```
+
+`scrape()` maps to `POST https://api.tavily.com/extract`. `search()` maps to `POST https://api.tavily.com/search`. Auth is `Authorization: Bearer`, not `api_key` in the body.

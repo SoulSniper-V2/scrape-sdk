@@ -1,17 +1,32 @@
 ---
-title: createScrapeClient()
-description: Factory function to create a typed, resilient ScrapeClient instance.
+title: createScrapeClient
+description: Client factory, fromEnv, and methods.
 ---
 
-## Type Signature
+```ts
+createScrapeClient({
+  providers?: ScrapeProvider[];
+  provider?: ScrapeProvider;          // alias for a single primary
+  fallback?: ScrapeProvider | ScrapeProvider[];
+  timeoutMs?: number;                 // default 30000, abortable
+  retries?: number;                   // extra attempts per provider on retryable errors; default 1
+  strategy?: "priority" | "cost";
+  cache?: boolean | { ttlMs?: number; maxEntries?: number };
+  onFailover?: (error: Error, from: string, to: string) => void;
+})
+```
 
 ```ts
-export interface ScrapeClientConfig {
-  provider: ScrapeProvider;
-  fallback?: ScrapeProvider;
-  defaultFormat?: "markdown" | "html" | "text" | "json";
-  timeoutMs?: number;
-}
-
-export function createScrapeClient(config: ScrapeClientConfig): ScrapeClient;
+fromEnv() // builds providers from process.env keys, always ends with jina + local
 ```
+
+### Methods
+
+- `scrape(url, options?)` — `maxChars` truncates markdown and sets `truncated` / `charCount`
+- `scrapeMany(urls, { concurrency?, ...scrapeOptions })`
+- `search(query, { limit?, includeAnswer?, includeRawContent? })`
+- `map(url, { limit?, search? })` — URL list without page bodies (Firecrawl)
+- `crawl(url, { limit?, maxDepth?, pollIntervalMs?, maxChars?, ... })`
+- `extract(url, { schema, prompt? })`
+- `supports(capability)` — `"scrape" | "search" | "crawl" | "extract" | "js" | "map"`
+- `listProviders()`

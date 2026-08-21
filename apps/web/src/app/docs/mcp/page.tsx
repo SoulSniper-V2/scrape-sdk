@@ -8,13 +8,17 @@ export default function McpPage() {
 
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-white">Claude Desktop Configuration</h3>
-        <p className="text-xs text-[#8f8e87]">Add to ~/Library/Application Support/Claude/claude_desktop_config.json:</p>
+        <p className="text-xs text-[#8f8e87]">Add env keys for Firecrawl/Tavily/Jina. Without keys, scrape still works via Jina + local.</p>
         <pre className="p-4 rounded border border-[#2b2b27] bg-[#090908] font-mono text-xs text-[#dedcd4] overflow-x-auto">
           <code>{`{
   "mcpServers": {
     "scrape-sdk": {
       "command": "npx",
-      "args": ["-y", "scrape-sdk-mcp"]
+      "args": ["-y", "scrape-sdk-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": "fc-...",
+        "TAVILY_API_KEY": "tvly-..."
+      }
     }
   }
 }`}</code>

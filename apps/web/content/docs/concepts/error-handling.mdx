@@ -1,17 +1,17 @@
 ---
-title: Diagnostic Error Codes
-description: Structured ScrapeError classes with retryable diagnostics.
+title: Errors
+description: Typed errors the client throws.
 ---
 
-```ts
-import { ScrapeError } from "scrape-sdk";
+| Class | When |
+| :--- | :--- |
+| `InvalidUrlError` | Not `http:` / `https:` |
+| `RateLimitError` | 429 / plan limits |
+| `AuthError` | 401 / 403 |
+| `TimeoutError` | Abort after `timeoutMs` |
+| `CapabilityError` | No provider supports the operation |
+| `AllProvidersFailedError` | Every candidate failed; `.errors` has the chain |
 
-try {
-  await scraper.scrape("https://example.com");
-} catch (err) {
-  if (err instanceof ScrapeError) {
-    console.log(err.code);      // "RATE_LIMITED" | "TIMEOUT" | "INVALID_URL"
-    console.log(err.retryable); // boolean
-  }
-}
+```ts
+import { AllProvidersFailedError, CapabilityError } from "scrape-sdk";
 ```
