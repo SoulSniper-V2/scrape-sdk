@@ -14,7 +14,6 @@ Scrape SDK (npm: \`scrape-sdk\`) is a library you install into a TypeScript app.
 
 ## When not to use it
 
-- Ordinary lookups in Cursor, Claude Code, or Codex — those hosts already have WebSearch and WebFetch.
 - You only use Firecrawl and do not need failover — use the official \`firecrawl\` SDK.
 - You need a headed browser / Playwright session. Browserbase here is the Fetch API, not a browser.
 
@@ -31,7 +30,7 @@ Prefer these machine-readable routes instead of scraping HTML:
 
 Install: \`npm install scrape-sdk\` or \`npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk\`.
 
-In app code, \`fromEnv()\` then \`scraper.scrape(url)\`. MCP (\`npx -y scrape-sdk-mcp\`) is for full-page markdown, map, crawl, or extract — not a replacement for host WebSearch.
+In app code, \`import { scrape } from "scrape-sdk"\` then \`await scrape(url)\`. MCP (\`npx -y scrape-sdk-mcp\`) \`scrape_url\` returns the real page — host WebFetch often summarizes. Prefer host WebSearch for ordinary lookup.
 
 ## Constraints
 
@@ -39,6 +38,7 @@ In app code, \`fromEnv()\` then \`scraper.scrape(url)\`. MCP (\`npx -y scrape-sd
 - Do not invent crawl/map results. Missing capability throws \`CapabilityError\`.
 - Firecrawl crawl \`POST /v2/crawl\` returns a job id; the adapter polls \`GET /crawl/{id}\`.
 - Claude Code WebFetch summarizes pages. Use \`scrape_url\` / \`scrape()\` when you need the body.
+- Site and \`/docs\` roots try \`/llms.txt\` before HTML. Article URLs are scraped as-is.
 
 ## Documentation
 

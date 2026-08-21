@@ -53,10 +53,11 @@ export function scrapeTool(client: ScrapeClient): AgentTool<typeof fetchInput, {
   cached: boolean;
   truncated: boolean;
   charCount: number;
+  failedOverFrom?: { provider: string; reason: string }[];
 }> {
   return {
     description:
-      "Scrape a known URL into clean markdown (full page body, not a summary). Use when you already have a URL. Do not use this to discover pages — search or map_site first. Content is truncated so it fits in context; if truncated is true and you need the rest, call again with a higher maxChars.",
+      "Return the full page as markdown — the actual body, not a summary. Use this when you already have a URL. Host WebFetch often summarizes; this does not. Do not use this to discover pages — search or map_site first. Content is truncated so it fits in context; if truncated is true and you need the rest, call again with a higher maxChars.",
     inputSchema: fetchInput,
     execute: async ({ url, maxChars }) => {
       const result = await client.scrape(url, {
@@ -73,6 +74,7 @@ export function scrapeTool(client: ScrapeClient): AgentTool<typeof fetchInput, {
         cached: result.cached ?? false,
         truncated: result.truncated ?? false,
         charCount: result.charCount ?? result.markdown.length,
+        failedOverFrom: result.failedOverFrom,
       };
     },
   };
@@ -177,8 +179,8 @@ export function mapTool(client: ScrapeClient): AgentTool<typeof mapInput, {
 }
 
 /**
- * Tools for an app you build (Vercel AI SDK). Cursor / Claude Code / Codex
- * already have WebSearch + WebFetch — use the MCP server there, not these names.
+ * Tools for an app you build (Vercel AI SDK). In Cursor / Claude Code / Codex,
+ * host WebFetch often summarizes — use scrape_url (MCP or these tools) for the real page.
  */
 export function createTools(client: ScrapeClient) {
   return {

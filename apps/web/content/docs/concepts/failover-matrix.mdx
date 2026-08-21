@@ -7,4 +7,5 @@ description: What is retried, what fails over, what does not.
 - **Not retryable:** 401/403, 4xx (except the above), `CapabilityError`, bad URLs.
 - `retries` (default `1`) is extra attempts **per provider** on retryable errors only.
 - Then the next provider in the chain runs. `onFailover(error, from, to)` fires once per hop.
+- Successful results include `failedOverFrom: [{ provider, reason }]` so you can print `via jina in 340ms (firecrawl 429)`.
 - Timeouts use `AbortSignal`, so the in-flight `fetch` is cancelled.

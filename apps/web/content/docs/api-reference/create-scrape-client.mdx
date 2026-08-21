@@ -18,11 +18,12 @@ createScrapeClient({
 
 ```ts
 fromEnv() // builds providers from process.env keys, always ends with jina + local
+scrape(url) // same chain, no client. Also search/map/crawl/extract/scrapeMany
 ```
 
 ### Methods
 
-- `scrape(url, options?)` — `maxChars` truncates markdown and sets `truncated` / `charCount`
+- `scrape(url, options?)` — `maxChars` truncates markdown and sets `truncated` / `charCount`. Site/docs roots try `/llms.txt` first (`preferLlmsTxt`, default true). `failedOverFrom` lists providers that died before the winner.
 - `scrapeMany(urls, { concurrency?, ...scrapeOptions })`
 - `search(query, { limit?, includeAnswer?, includeRawContent? })`
 - `map(url, { limit?, search? })` — URL list without page bodies (Firecrawl)

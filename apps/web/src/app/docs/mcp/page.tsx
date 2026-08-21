@@ -3,7 +3,7 @@ export default function McpPage() {
     <div className="space-y-8">
       <div className="space-y-2">
         <h1 className="font-editorial text-4xl tracking-tight text-white">Model Context Protocol (MCP)</h1>
-        <p className="text-sm text-[#a09f97]">Give coding agents a full-page scrape when host WebFetch only summarizes. Cursor, Claude Code, and Codex already search the web.</p>
+        <p className="text-sm text-[#a09f97]">Give coding agents the real page when host WebFetch only summarizes. Keep host WebSearch for lookup.</p>
       </div>
 
       <div className="space-y-3">

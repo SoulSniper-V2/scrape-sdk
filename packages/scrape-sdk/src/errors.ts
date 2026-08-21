@@ -70,3 +70,12 @@ export function isRetryableError(err: unknown): boolean {
   if (err instanceof Error && err.name === "AbortError") return true;
   return false;
 }
+
+export function failoverReason(error: Error): string {
+  if (error instanceof RateLimitError) return "429";
+  if (error instanceof TimeoutError) return "timeout";
+  if (error instanceof AuthError) return "auth";
+  if (error instanceof ScrapeError && error.statusCode) return String(error.statusCode);
+  const name = error.name.replace(/Error$/, "");
+  return name ? name.toLowerCase() : "error";
+}

@@ -40,5 +40,6 @@ export function fromEnv(options: FromEnvOptions = {}): ScrapeClient {
     timeoutMs: options.timeoutMs,
     strategy: options.strategy ?? "priority",
     cache: options.cache ?? { ttlMs: 60_000 },
+    fetch: fetchFn,
   });
 }

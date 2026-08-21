@@ -4,6 +4,7 @@ import {
   CrawlResult,
   ExtractOptions,
   ExtractResult,
+  FailoverHop,
   MapOptions,
   MapResult,
   MemoryCacheConfig,
@@ -20,12 +21,14 @@ import {
   AllProvidersFailedError,
   CapabilityError,
   TimeoutError,
+  failoverReason,
   isRetryableError,
 } from "./errors.js";
 import { MemoryCache, cacheKey } from "./cache.js";
 import { sleep } from "./http.js";
 import { assertHttpUrl } from "./url.js";
 import { clipText } from "./clip.js";
+import { tryLlmsTxt } from "./llms-txt.js";
 
 export class ScrapeClient {
   private readonly providers: ScrapeProvider[];
@@ -34,6 +37,7 @@ export class ScrapeClient {
   private readonly strategy: RoutingStrategy;
   private readonly cache?: MemoryCache;
   private readonly onFailover?: ScrapeClientConfig["onFailover"];
+  private readonly fetchFn: typeof fetch;
 
   constructor(config: ScrapeClientConfig) {
     this.providers = resolveProviders(config);
@@ -44,6 +48,7 @@ export class ScrapeClient {
     this.retries = config.retries ?? 1;
     this.strategy = config.strategy ?? "priority";
     this.onFailover = config.onFailover;
+    this.fetchFn = config.fetch ?? globalThis.fetch.bind(globalThis);
     if (config.cache) {
       const cacheConfig: MemoryCacheConfig = config.cache === true ? {} : config.cache;
       this.cache = new MemoryCache(cacheConfig);
@@ -60,9 +65,29 @@ export class ScrapeClient {
 
   async scrape(url: string, options?: ScrapeOptions): Promise<ScrapeResult> {
     assertHttpUrl(url);
-    const key = cacheKey(url, { op: "scrape", format: options?.format, main: options?.onlyMainContent, max: options?.maxChars });
+    const key = cacheKey(url, {
+      op: "scrape",
+      format: options?.format,
+      main: options?.onlyMainContent,
+      max: options?.maxChars,
+      llms: options?.preferLlmsTxt !== false,
+    });
     const hit = this.cache?.get(key);
     if (hit) return hit;
+
+    if (
+      options?.preferLlmsTxt !== false &&
+      options?.format !== "html" &&
+      options?.format !== "json" &&
+      !options?.schema
+    ) {
+      const llms = await tryLlmsTxt(url, this.fetchFn, options?.signal);
+      if (llms) {
+        const clipped = applyClip(llms, options?.maxChars);
+        this.cache?.set(key, clipped);
+        return clipped;
+      }
+    }
 
     const needed: ProviderCapability[] = options?.schema ? ["extract"] : ["scrape"];
     if (options?.waitForMs) needed.push("js");
@@ -165,6 +190,7 @@ export class ScrapeClient {
     }
 
     const errors: Error[] = [];
+    const hops: FailoverHop[] = [];
 
     for (let i = 0; i < chain.length; i++) {
       const provider = chain[i];
@@ -172,7 +198,8 @@ export class ScrapeClient {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), timeoutMs);
         try {
-          return await fn(provider, controller.signal);
+          const value = await fn(provider, controller.signal);
+          return attachFailover(value, hops);
         } catch (err: unknown) {
           const error = err instanceof Error ? err : new Error(String(err));
           if (controller.signal.aborted && !isUserAbort(error)) {
@@ -186,9 +213,11 @@ export class ScrapeClient {
             await sleep(250 * (attempt + 1));
             continue;
           }
+          const failed = errors[errors.length - 1];
+          hops.push({ provider: provider.name, reason: failoverReason(failed) });
           const next = chain[i + 1];
           if (next && this.onFailover) {
-            this.onFailover(errors[errors.length - 1], provider.name, next.name);
+            this.onFailover(failed, provider.name, next.name);
           }
           break;
         } finally {
@@ -213,6 +242,11 @@ function resolveProviders(config: ScrapeClientConfig): ScrapeProvider[] {
 
 function isUserAbort(error: Error): boolean {
   return error.name === "AbortError" && !error.message.includes("timeout");
+}
+
+function attachFailover<T>(result: T, hops: FailoverHop[]): T {
+  if (!hops.length || result === null || typeof result !== "object") return result;
+  return { ...(result as object), failedOverFrom: hops } as T;
 }
 
 function applyClip(result: ScrapeResult, maxChars?: number): ScrapeResult {

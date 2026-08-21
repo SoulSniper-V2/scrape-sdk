@@ -4,11 +4,11 @@ TypeScript client: scrape a URL to markdown with failover across Firecrawl, Jina
 
 ## If you are writing app code
 
-`fromEnv()` + `scraper.scrape(url)` is the product. Same idea as Email SDK / Domain SDK.
+`import { scrape } from "scrape-sdk"` then `await scrape(url)` is the product. `fromEnv()` if you want a client.
 
 ## If you are Cursor, Claude Code, or Codex
 
-You already have WebSearch and WebFetch. Do not use this MCP to search. Claude Code WebFetch **summarizes** the page (Haiku); Codex search defaults to a **cache**. Use `npx -y scrape-sdk-mcp` only when you need the full markdown body, `map_site`, `crawl_site`, or `extract_json`. Tool name is `scrape_url` so it does not collide with host `WebFetch`.
+Host WebSearch is fine. Host WebFetch often **summarizes** the page (Claude Code uses Haiku). Use `npx -y scrape-sdk-mcp` / `scrape_url` when you need the real markdown body, `map_site`, `crawl_site`, or `extract_json`.
 
 ## If you are working in this repo
 

@@ -27,7 +27,7 @@ async function main(): Promise<void> {
 
   server.tool(
     "scrape_url",
-    "Return the full page as markdown (not a summary). Cursor/Claude Code/Codex already have WebFetch — use that for a quick lookup. Use scrape_url when you need the actual body, vendor failover (Firecrawl/Jina/local), or a higher maxChars cap. Default 20000 chars; truncated=true means raise maxChars.",
+    "Return the full page as markdown — the actual body, not a summary. Host WebFetch (Cursor, Claude Code, Codex) often summarizes; use scrape_url when you need the real page, vendor failover (Firecrawl → Jina → local), or a higher maxChars cap. Default 20000 chars; truncated=true means raise maxChars.",
     {
       url: z.string().url().describe("Absolute http(s) URL"),
       maxChars: z.number().int().min(500).max(100_000).optional(),
@@ -45,6 +45,7 @@ async function main(): Promise<void> {
         latencyMs: result.latencyMs,
         truncated: result.truncated ?? false,
         charCount: result.charCount,
+        failedOverFrom: result.failedOverFrom,
         content: result.markdown || result.text || result.html || "",
       });
     }

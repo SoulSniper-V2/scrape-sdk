@@ -17,6 +17,16 @@ export interface ScrapeOptions {
   signal?: AbortSignal;
   /** Truncate markdown/text after this many characters. Agent tools default to 20000. */
   maxChars?: number;
+  /**
+   * For site/docs roots, try `/llms.txt` before HTML scrape. Default true.
+   * Skip this for a specific article URL — we already do.
+   */
+  preferLlmsTxt?: boolean;
+}
+
+export interface FailoverHop {
+  provider: string;
+  reason: string;
 }
 
 export interface ScrapeResult {
@@ -42,6 +52,8 @@ export interface ScrapeResult {
   cached?: boolean;
   truncated?: boolean;
   charCount?: number;
+  /** Providers that failed before this result, in order. */
+  failedOverFrom?: FailoverHop[];
 }
 
 export interface CrawlOptions extends ScrapeOptions {
@@ -59,6 +71,7 @@ export interface CrawlResult {
   totalPages: number;
   provider: string;
   latencyMs: number;
+  failedOverFrom?: FailoverHop[];
 }
 
 export interface SearchOptions {
@@ -82,6 +95,7 @@ export interface SearchResult {
   results: SearchHit[];
   provider: string;
   latencyMs: number;
+  failedOverFrom?: FailoverHop[];
 }
 
 export interface MapOptions {
@@ -95,6 +109,7 @@ export interface MapResult {
   links: string[];
   provider: string;
   latencyMs: number;
+  failedOverFrom?: FailoverHop[];
 }
 
 export interface ExtractOptions {
@@ -108,6 +123,7 @@ export interface ExtractResult {
   data: unknown;
   provider: string;
   latencyMs: number;
+  failedOverFrom?: FailoverHop[];
 }
 
 export interface BatchScrapeOptions extends ScrapeOptions {

@@ -6,10 +6,11 @@ import { jina } from "../adapters/jina.js";
 import { local } from "../adapters/local.js";
 import { firecrawl } from "../adapters/firecrawl.js";
 import { tavily } from "../adapters/tavily.js";
+import { viaLine } from "../via.js";
 
 function help(): void {
   console.log(`
-scrape-sdk — scrape, search, and crawl the web
+scrape-sdk — scrape a URL to markdown (real page, not a summary)
 
 Usage:
   npx scrape-sdk <url>
@@ -19,7 +20,7 @@ Usage:
   npx scrape-sdk map <url> [--limit 100] [--json]
   npx scrape-sdk mcp
 
-Environment:
+Works with no keys (Jina + local). Optional:
   FIRECRAWL_API_KEY, TAVILY_API_KEY, JINA_API_KEY, SPIDER_API_KEY, BROWSERBASE_API_KEY
 `);
 }
@@ -46,6 +47,7 @@ async function main(): Promise<void> {
       const query = rest.filter((a) => !a.startsWith("--") && a !== "jina" && a !== "local" && a !== "firecrawl" && a !== "tavily" && a !== "markdown" && a !== "html" && a !== "text").join(" ").trim();
       if (!query) throw new Error("Provide a search query");
       const result = await client.search(query);
+      if (!jsonOut) console.error(viaLine(result));
       print(jsonOut ? result : result.results.map((r) => `- ${r.title}\n  ${r.url}\n  ${r.snippet}`).join("\n\n") || "No results");
       return;
     }
@@ -57,6 +59,7 @@ async function main(): Promise<void> {
       const limitIdx = rest.indexOf("--limit");
       const limit = limitIdx !== -1 ? Number(rest[limitIdx + 1]) : 100;
       const result = await client.map(url, { limit });
+      if (!jsonOut) console.error(viaLine(result));
       print(jsonOut ? result : result.links.join("\n") || "No links");
       return;
     }
@@ -65,6 +68,7 @@ async function main(): Promise<void> {
       const limitIdx = rest.indexOf("--limit");
       const limit = limitIdx !== -1 ? Number(rest[limitIdx + 1]) : 10;
       const result = await client.crawl(url, { limit });
+      if (!jsonOut) console.error(viaLine(result));
       print(jsonOut ? result : result.pages.map((p) => `# ${p.title}\n${p.url}\n\n${p.markdown}`).join("\n\n---\n\n"));
       return;
     }
@@ -72,6 +76,7 @@ async function main(): Promise<void> {
     const formatIdx = rest.indexOf("--format");
     const format = (formatIdx !== -1 ? rest[formatIdx + 1] : "markdown") as "markdown" | "html" | "text";
     const result = await client.scrape(url, { format, onlyMainContent: true });
+    if (!jsonOut) console.error(viaLine(result));
     print(jsonOut ? result : result.markdown || result.text || result.html || "");
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

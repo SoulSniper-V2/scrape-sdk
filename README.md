@@ -12,6 +12,7 @@ One TypeScript client for scraping URLs to markdown. Pick Firecrawl, Jina, Tavil
 - Adapters against live vendor APIs: Firecrawl v2, Jina, Tavily, Spider.cloud, Browserbase Fetch, and Cheerio
 - `scrape(url)` is the verb. `map()`, `crawl()`, `extract()`, `search()`, and `scrapeMany()` when a provider can do them
 - Abortable timeouts, retries on retryable errors, and automatic failover
+- Site/docs roots try `/llms.txt` before HTML
 - `fromEnv()` builds the client from the keys you already have
 - CLI, Vercel AI SDK tools, and an MCP server for full-page markdown
 
@@ -26,17 +27,20 @@ Works on Node 20+ and Bun. Keep provider API keys out of client code.
 ## Usage
 
 ```ts
+import { scrape } from "scrape-sdk";
+
+const page = await scrape("https://stripe.com");
+console.log(page.markdown);
+console.log(`via ${page.provider} in ${page.latencyMs}ms`);
+```
+
+No API key required — Jina + local are always in the chain. Add keys and it fails over:
+
+```ts
 import { fromEnv } from "scrape-sdk";
 
 const scraper = fromEnv();
-
-const page = await scraper.scrape("https://stripe.com", {
-  format: "markdown",
-  onlyMainContent: true,
-});
-
-console.log(page.markdown);
-console.log(`via ${page.provider} in ${page.latencyMs}ms`);
+const page = await scraper.scrape("https://stripe.com");
 ```
 
 Or pick the order yourself:
@@ -109,7 +113,7 @@ npx scrape-sdk scrape https://example.com --provider local
 }
 ```
 
-`scrape_url` returns the full page as markdown. `map_site`, `crawl_site`, and `extract_json` register when the configured providers support them.
+`scrape_url` returns the full page as markdown — not a summary. Host WebFetch often summarizes; this does not. `map_site`, `crawl_site`, and `extract_json` register when the configured providers support them.
 
 ## Documentation
 

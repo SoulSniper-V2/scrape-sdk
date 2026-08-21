@@ -26,7 +26,7 @@ describe("ScrapeClient", () => {
         scrape: async () => ok({ provider: "primary", markdown: "# Hi" }),
       },
     });
-    const result = await client.scrape("https://example.com");
+    const result = await client.scrape("https://example.com", { preferLlmsTxt: false });
     assert.equal(result.provider, "primary");
     assert.equal(result.markdown, "# Hi");
   });
@@ -68,10 +68,11 @@ describe("ScrapeClient", () => {
         to = dest;
       },
     });
-    const result = await client.scrape("https://example.com");
+    const result = await client.scrape("https://example.com", { preferLlmsTxt: false });
     assert.equal(result.provider, "jina");
     assert.equal(from, "firecrawl");
     assert.equal(to, "jina");
+    assert.deepEqual(result.failedOverFrom, [{ provider: "firecrawl", reason: "429" }]);
   });
 
   it("does not retry auth errors onto the same provider", async () => {
@@ -88,7 +89,7 @@ describe("ScrapeClient", () => {
       },
       retries: 3,
     });
-    await assert.rejects(() => client.scrape("https://example.com"), AllProvidersFailedError);
+    await assert.rejects(() => client.scrape("https://example.com", { preferLlmsTxt: false }), AllProvidersFailedError);
     assert.equal(calls, 1);
   });
 
@@ -107,7 +108,7 @@ describe("ScrapeClient", () => {
       },
       retries: 1,
     });
-    const result = await client.scrape("https://example.com");
+    const result = await client.scrape("https://example.com", { preferLlmsTxt: false });
     assert.equal(result.provider, "flaky");
     assert.equal(calls, 2);
   });
@@ -170,7 +171,7 @@ describe("ScrapeClient", () => {
         },
       ],
     });
-    const result = await client.scrape("https://example.com");
+    const result = await client.scrape("https://example.com", { preferLlmsTxt: false });
     assert.equal(result.provider, "cheap");
   });
 
@@ -188,8 +189,8 @@ describe("ScrapeClient", () => {
         },
       },
     });
-    const first = await client.scrape("https://example.com");
-    const second = await client.scrape("https://example.com");
+    const first = await client.scrape("https://example.com", { preferLlmsTxt: false });
+    const second = await client.scrape("https://example.com", { preferLlmsTxt: false });
     assert.equal(calls, 1);
     assert.equal(first.cached, undefined);
     assert.equal(second.cached, true);
@@ -214,7 +215,7 @@ describe("ScrapeClient", () => {
     });
     const results = await client.scrapeMany(
       ["https://a.com", "https://b.com", "https://c.com", "https://d.com"],
-      { concurrency: 2 }
+      { concurrency: 2, preferLlmsTxt: false }
     );
     assert.equal(results.length, 4);
     assert.ok(max <= 2);
@@ -229,7 +230,7 @@ describe("ScrapeClient", () => {
         scrape: async () => ok({ provider: "long", markdown: "abcdefghij" }),
       },
     });
-    const result = await client.scrape("https://example.com", { maxChars: 4 });
+    const result = await client.scrape("https://example.com", { maxChars: 4, preferLlmsTxt: false });
     assert.equal(result.truncated, true);
     assert.equal(result.charCount, 10);
     assert.match(result.markdown, /^abcd/);
@@ -254,6 +255,55 @@ describe("ScrapeClient", () => {
     const mapped = await client.map("https://example.com");
     assert.deepEqual(mapped.links, ["https://example.com/docs"]);
   });
+
+  it("reads /llms.txt on a site root before calling providers", async () => {
+    let providerCalls = 0;
+    const client = createScrapeClient({
+      fetch: (async (input: RequestInfo | URL) => {
+        const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+        if (href === "https://example.com/llms.txt") {
+          return new Response("# Example\n\n> Agent docs live here.\n\n- [Quickstart](https://example.com/docs)\n", {
+            status: 200,
+            headers: { "content-type": "text/plain; charset=utf-8" },
+          });
+        }
+        return new Response("nope", { status: 404 });
+      }) as typeof fetch,
+      provider: {
+        name: "primary",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => {
+          providerCalls += 1;
+          return ok({ provider: "primary" });
+        },
+      },
+    });
+    const result = await client.scrape("https://example.com");
+    assert.equal(result.provider, "llms.txt");
+    assert.match(result.markdown, /Agent docs live here/);
+    assert.equal(providerCalls, 0);
+  });
+
+  it("does not swap an article URL for the site llms.txt", async () => {
+    let probed = false;
+    const client = createScrapeClient({
+      fetch: (async () => {
+        probed = true;
+        return new Response("# should not run", { status: 200 });
+      }) as typeof fetch,
+      provider: {
+        name: "primary",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => ok({ provider: "primary", markdown: "# pricing" }),
+      },
+    });
+    const result = await client.scrape("https://stripe.com/pricing");
+    assert.equal(result.provider, "primary");
+    assert.equal(result.markdown, "# pricing");
+    assert.equal(probed, false);
+  });
 });
 
 describe("markdown pipeline", () => {
@@ -275,6 +325,40 @@ describe("markdown pipeline", () => {
     assert.match(md, /# Hello/);
     assert.match(md, /Useful paragraph/);
     assert.doesNotMatch(md, /copyright/);
+  });
+});
+
+describe("convenience scrape()", () => {
+  it("uses the injected default client", async () => {
+    const { scrape, setDefaultClient, resetDefaultClient, createScrapeClient, viaLine } = await import("./index.js");
+    const client = createScrapeClient({
+      provider: {
+        name: "injected",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => ok({ provider: "injected", markdown: "# one shot" }),
+      },
+    });
+    setDefaultClient(client);
+    try {
+      const page = await scrape("https://example.com", { preferLlmsTxt: false });
+      assert.equal(page.markdown, "# one shot");
+      assert.equal(viaLine(page), "via injected in 1ms");
+    } finally {
+      resetDefaultClient();
+    }
+  });
+
+  it("viaLine includes failover hops", async () => {
+    const { viaLine } = await import("./index.js");
+    assert.equal(
+      viaLine({
+        provider: "jina",
+        latencyMs: 340,
+        failedOverFrom: [{ provider: "firecrawl", reason: "429" }],
+      }),
+      "via jina in 340ms (firecrawl 429)"
+    );
   });
 });
 

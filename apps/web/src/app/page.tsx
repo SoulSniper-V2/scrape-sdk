@@ -37,23 +37,9 @@ const PROVIDERS = [
 ];
 
 const CODE_EXAMPLES = {
-  quickstart: `import { createScrapeClient } from "scrape-sdk";
-import { firecrawl } from "scrape-sdk/firecrawl";
-import { jina } from "scrape-sdk/jina";
-import { local } from "scrape-sdk/local";
+  quickstart: `import { scrape } from "scrape-sdk";
 
-const scraper = createScrapeClient({
-  providers: [
-    firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! }),
-    jina(),
-    local(),
-  ],
-});
-
-const page = await scraper.scrape("https://stripe.com", {
-  format: "markdown",
-  onlyMainContent: true,
-});
+const page = await scrape("https://stripe.com");
 
 console.log(page.markdown);
 console.log(\`via \${page.provider} in \${page.latencyMs}ms\`);`,
@@ -355,23 +341,9 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
               <span>TypeScript</span>
             </div>
             <pre className="p-8 font-mono text-[13px] leading-[1.85] text-[#dedcd4] overflow-x-auto">
-              <code>{`import { createScrapeClient } from "scrape-sdk";
-import { firecrawl } from "scrape-sdk/firecrawl";
-import { jina } from "scrape-sdk/jina";
-import { local } from "scrape-sdk/local";
+              <code>{`import { scrape } from "scrape-sdk";
 
-const scraper = createScrapeClient({
-  providers: [
-    firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! }),
-    jina(),
-    local(),
-  ],
-});
-
-const page = await scraper.scrape("https://stripe.com", {
-  format: "markdown",
-  onlyMainContent: true,
-});`}</code>
+const page = await scrape("https://stripe.com");`}</code>
             </pre>
             <div className="p-6 border-t border-[#2b2b27] bg-[#141412]/40 text-xs text-[#8f8e87]">
               Zero boilerplate. Seamless provider failover.
@@ -633,7 +605,12 @@ const page = await scraper.scrape("https://stripe.com", {
           {result && (
             <div className="p-4">
               <div className="flex items-center justify-between text-xs font-mono text-[#8f8e87] mb-2 px-1">
-                <span>{result.provider} ➔ {result.latencyMs}ms</span>
+                <span>
+                  {result.provider} ➔ {result.latencyMs}ms
+                  {result.failedOverFrom?.length
+                    ? ` (${result.failedOverFrom.map((h: { provider: string; reason: string }) => `${h.provider} ${h.reason}`).join(" → ")})`
+                    : ""}
+                </span>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(result.markdown);

@@ -1,7 +1,7 @@
 {
   "name": "scrape-sdk-mcp",
   "version": "0.2.1",
-  "description": "MCP server for scrape-sdk — full-page scrape, map, crawl, extract. Not a replacement for Cursor/Claude Code/Codex WebSearch.",
+  "description": "MCP server for scrape-sdk — full-page scrape when host WebFetch only summarizes. Also map, crawl, extract.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {

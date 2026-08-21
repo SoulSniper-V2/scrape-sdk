@@ -3,7 +3,20 @@ title: Quickstart
 description: Scrape, search, crawl, and extract in a few lines.
 ---
 
-## 1. Create a client
+## 1. Scrape a URL
+
+```ts
+import { scrape } from "scrape-sdk";
+
+const page = await scrape("https://news.ycombinator.com");
+console.log(page.markdown, page.provider, page.latencyMs);
+```
+
+No keys required. Jina + local are always in the chain. Site and `/docs` roots try `/llms.txt` before HTML.
+
+Pass `maxChars` when the caller is an LLM. Agent tools default to 20_000.
+
+## 2. Create a client (optional)
 
 ```ts
 import { createScrapeClient, fromEnv } from "scrape-sdk";
@@ -26,18 +39,6 @@ const scraper = createScrapeClient({
 ```
 
 `provider` + `fallback` still works. Prefer `providers` for more than two backends.
-
-## 2. Scrape a URL
-
-```ts
-const page = await scraper.scrape("https://news.ycombinator.com", {
-  format: "markdown",
-  onlyMainContent: true,
-});
-console.log(page.markdown, page.provider, page.latencyMs);
-```
-
-Pass `maxChars` when the caller is an LLM. Agent tools default to 20_000.
 
 ## 3. Search when you do not have a URL
 

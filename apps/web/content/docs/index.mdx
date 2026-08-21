@@ -6,26 +6,14 @@ description: Scrape, search, crawl, and extract with one TypeScript client acros
 Scrape SDK is a provider-neutral web client for TypeScript agents. It talks to real vendor APIs, fails over on retryable errors, and returns one typed result shape.
 
 ```ts title="scraper.ts"
-import { createScrapeClient } from "scrape-sdk";
-import { firecrawl } from "scrape-sdk/firecrawl";
-import { jina } from "scrape-sdk/jina";
-import { local } from "scrape-sdk/local";
+import { scrape } from "scrape-sdk";
 
-export const scraper = createScrapeClient({
-  providers: [
-    firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! }),
-    jina(),
-    local(),
-  ],
-});
-
-const page = await scraper.scrape("https://stripe.com/docs", {
-  format: "markdown",
-  onlyMainContent: true,
-});
+const page = await scrape("https://stripe.com/docs");
+console.log(page.markdown);
+console.log(`via ${page.provider} in ${page.latencyMs}ms`);
 ```
 
-Use `search()` when you do not have a URL, `crawl()` for a site, and `extract()` for JSON Schema. Providers that cannot perform an operation are skipped.
+Use `search()` when you do not have a URL, `crawl()` for a site, and `extract()` for JSON Schema. Providers that cannot perform an operation are skipped. A client (`fromEnv()` / `createScrapeClient`) is optional — `scrape(url)` is enough.
 
 ## Read next
 

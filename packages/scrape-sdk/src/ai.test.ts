@@ -32,7 +32,10 @@ const mock: ScrapeProvider = {
 
 describe("AI SDK tools", () => {
   it("exposes inputSchema instead of parameters", async () => {
-    const client = createScrapeClient({ provider: mock });
+    const client = createScrapeClient({
+      provider: mock,
+      fetch: (async () => new Response("no", { status: 404 })) as typeof fetch,
+    });
     const tool = scrapeTool(client);
     assert.equal(typeof tool.execute, "function");
     assert.ok(tool.inputSchema);
