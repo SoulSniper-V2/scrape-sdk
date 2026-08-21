@@ -1,5 +1,12 @@
 # Scrape SDK
 
+<p align="center">
+  <a href="https://www.npmjs.com/package/scrape-sdk"><img alt="npm version" src="https://shieldcn.dev/npm/scrape-sdk.svg?variant=secondary&mode=dark" /></a>
+  <a href="https://www.scrape-sdk.com"><img alt="scrape-sdk.com" src="https://shieldcn.dev/badge/site-scrape--sdk.com.svg?variant=secondary&mode=dark" /></a>
+  <a href="https://github.com/SoulSniper-V2/scrape-sdk/stargazers"><img alt="GitHub stars" src="https://shieldcn.dev/github/SoulSniper-V2/scrape-sdk/stars.svg?variant=branded&mode=dark" /></a>
+  <a href="https://x.com/be_arsh"><img alt="Follow @be_arsh on X" src="https://shieldcn.dev/x/follow/be_arsh.svg?variant=branded&mode=dark" /></a>
+</p>
+
 One TypeScript client for scraping URLs to markdown. Swap Firecrawl, Jina, Tavily, Spider, Browserbase, and local Cheerio without rewriting callers.
 
 - Honest adapters against current vendor APIs (Firecrawl v2, Jina JSON, Tavily Bearer, Browserbase Fetch)
@@ -9,8 +16,6 @@ One TypeScript client for scraping URLs to markdown. Swap Firecrawl, Jina, Tavil
 - Vercel AI SDK tools for **app** agents that have no built-in web tools
 - CLI: `npx scrape-sdk <url>`
 - MIT licensed
-
-Docs: https://www.scrape-sdk.com
 
 ## Install
 
