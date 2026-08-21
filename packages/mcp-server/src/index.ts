@@ -12,16 +12,22 @@ function jsonText(value: unknown) {
   };
 }
 
+function hasPaidSearchKey(): boolean {
+  return Boolean(
+    process.env.TAVILY_API_KEY || process.env.FIRECRAWL_API_KEY || process.env.FIRECRAWL_KEY
+  );
+}
+
 async function main(): Promise<void> {
   const client = fromEnv({ cache: { ttlMs: 60_000 } });
   const server = new McpServer({
     name: "scrape-sdk",
-    version: "0.2.0",
+    version: "0.2.1",
   });
 
   server.tool(
-    "web_fetch",
-    "Read a known URL into clean markdown. Truncated to fit context (default 20000 chars). If truncated is true and you need more, pass a higher maxChars. Use web_search when you do not have a URL.",
+    "scrape_url",
+    "Return the full page as markdown (not a summary). Cursor/Claude Code/Codex already have WebFetch — use that for a quick lookup. Use scrape_url when you need the actual body, vendor failover (Firecrawl/Jina/local), or a higher maxChars cap. Default 20000 chars; truncated=true means raise maxChars.",
     {
       url: z.string().url().describe("Absolute http(s) URL"),
       maxChars: z.number().int().min(500).max(100_000).optional(),
@@ -44,10 +50,10 @@ async function main(): Promise<void> {
     }
   );
 
-  if (client.supports("search")) {
+  if (hasPaidSearchKey() && client.supports("search")) {
     server.tool(
-      "web_search",
-      "Search the live web. Use when you do not already have a URL. Then web_fetch the best 1–3 results.",
+      "search_web",
+      "Search via Tavily or Firecrawl. Prefer the host WebSearch (Cursor, Claude Code, Codex) for ordinary lookups. Use this only when you explicitly want those providers.",
       {
         query: z.string().min(1),
         limit: z.number().int().min(1).max(20).optional(),
@@ -68,7 +74,7 @@ async function main(): Promise<void> {
   if (client.supports("map")) {
     server.tool(
       "map_site",
-      "List URLs on a site without downloading bodies. Cheaper than crawl. Then web_fetch specific pages.",
+      "List URLs on a site without downloading bodies. Hosts do not ship this. Then scrape_url specific pages.",
       {
         url: z.string().url(),
         limit: z.number().int().min(1).max(500).optional(),
@@ -84,7 +90,7 @@ async function main(): Promise<void> {
   if (client.supports("crawl")) {
     server.tool(
       "crawl_site",
-      "Crawl a site and return markdown per page. Expensive. Prefer map_site + web_fetch unless you need many pages in one call.",
+      "Crawl a site and return markdown per page. Hosts do not ship this. Expensive. Prefer map_site + scrape_url unless you need many pages in one call.",
       {
         url: z.string().url(),
         limit: z.number().int().min(1).max(50).optional(),
@@ -107,7 +113,7 @@ async function main(): Promise<void> {
   if (client.supports("extract")) {
     server.tool(
       "extract_json",
-      "Extract structured JSON from a page using a JSON Schema. Prefer over web_fetch when you need fields, not prose.",
+      "Extract structured JSON from a page using a JSON Schema. Hosts do not ship this. Prefer over scrape_url when you need fields, not prose.",
       {
         url: z.string().url(),
         schema: z.record(z.string(), z.unknown()),

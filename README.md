@@ -1,12 +1,12 @@
 # Scrape SDK
 
-One TypeScript client for scraping, searching, crawling, and extracting structured data from the web. Swap Firecrawl, Jina, Tavily, Spider, Browserbase, and local Cheerio without rewriting your agent.
+One TypeScript client for scraping URLs to markdown. Swap Firecrawl, Jina, Tavily, Spider, Browserbase, and local Cheerio without rewriting callers.
 
 - Honest adapters against current vendor APIs (Firecrawl v2, Jina JSON, Tavily Bearer, Browserbase Fetch)
 - Abortable timeouts, retry-only-on-retryable-errors, and automatic failover
-- `search()`, `map()` for URL lists, `crawl()` with job polling, `extract()` with JSON Schema, `scrapeMany()`
-- Agent tools named `web_fetch` / `web_search` with a 20k-char default so pages do not blow context
-- Vercel AI SDK tools (`inputSchema`) and a real MCP server (`npx scrape-sdk-mcp`)
+- `scrape(url)` is the product. `map()`, `crawl()`, `extract()`, `search()`, `scrapeMany()` when a provider can do them
+- Optional MCP for coding agents that need a **full page** (Claude Code WebFetch summarizes), plus map/crawl/extract. Not a replacement for host WebSearch.
+- Vercel AI SDK tools for **app** agents that have no built-in web tools
 - CLI: `npx scrape-sdk <url>`
 - MIT licensed
 
@@ -95,7 +95,7 @@ const { text } = await generateText({
 });
 ```
 
-Tools use AI SDK `inputSchema` (Zod), not the old `parameters` field. Names: `web_fetch`, `web_search`, plus `map_site` / `crawl_site` / `extract_json` when the client supports them. `web_fetch` defaults to 20_000 characters and returns `truncated`.
+Tools use AI SDK `inputSchema` (Zod), not the old `parameters` field. Names: `scrape_url`, plus `search_web` / `map_site` / `crawl_site` / `extract_json` when the client supports them. `scrape_url` defaults to 20_000 characters and returns `truncated`. Use this in **your** app agent. Cursor, Claude Code, and Codex already have WebSearch/WebFetch — do not duplicate those with this package.
 
 ## MCP
 
@@ -114,7 +114,7 @@ Tools use AI SDK `inputSchema` (Zod), not the old `parameters` field. Names: `we
 }
 ```
 
-The server is built on `@modelcontextprotocol/sdk` (initialize handshake included). Tools: `web_fetch` and `web_search`, plus `map_site` / `crawl_site` / `extract_json` when keys allow. Fetch is truncated by default so agents do not eat the whole context window.
+The server is built on `@modelcontextprotocol/sdk`. Tools: `scrape_url` (full markdown, not a host WebFetch summary), plus `map_site` / `crawl_site` / `extract_json` when keys allow. `search_web` is registered only if `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` is set — otherwise use the host WebSearch.
 
 ## CLI
 

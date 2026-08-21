@@ -28,6 +28,16 @@ npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
 | `scrape-sdk/spider` | Spider `/scrape` and `/crawl` |
 | `scrape-sdk/browserbase` | Browserbase **Fetch API** |
 | `scrape-sdk/local` | Cheerio + turndown |
-| `scrape-sdk/ai` | `createTools` → `web_fetch`, `web_search`, `map_site`, `crawl_site`, `extract_json` |
+| `scrape-sdk/ai` | `createTools` → `scrape_url`, `search_web`, `map_site`, `crawl_site`, `extract_json` |
 
 MCP is a separate package: `npx scrape-sdk-mcp`.
+
+## Machine-readable docs
+
+Do not scrape the HTML docs. Use:
+
+- `/llms.txt` — site index
+- `/docs/<path>.md` — one page as Markdown
+- `/feeds/docs.jsonl` — one JSON object per page
+
+See [For agents](/docs/agents).

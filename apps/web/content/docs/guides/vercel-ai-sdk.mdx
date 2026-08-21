@@ -1,7 +1,9 @@
 ---
 title: Vercel AI SDK
-description: web_fetch and web_search tools with inputSchema for generateText / streamText.
+description: scrape_url tools with inputSchema for generateText / streamText in your app.
 ---
+
+Use these tools inside **your** product agent. Cursor, Claude Code, and Codex already ship WebSearch/WebFetch — do not wire this as a duplicate of those.
 
 ```ts
 import { generateText, stepCountIs } from "ai";
@@ -18,14 +20,12 @@ const { text } = await generateText({
 });
 ```
 
-`createTools` uses the names agents already know:
-
 | Tool | When |
 | :--- | :--- |
-| `web_fetch` | You have a URL. Default `maxChars` 20000. Returns `truncated` and `charCount`. |
-| `web_search` | You need to find URLs. Then fetch the best hits. |
+| `scrape_url` | You have a URL. Full markdown, default `maxChars` 20000. Returns `truncated` and `charCount`. |
+| `search_web` | App agent with no host search. Then scrape the best hits. |
 | `map_site` | List URLs on a site (Firecrawl). |
-| `crawl_site` | Many page bodies. Expensive; prefer map + fetch. |
+| `crawl_site` | Many page bodies. Expensive; prefer map + scrape. |
 | `extract_json` | Structured fields via JSON Schema. |
 
-Each tool uses Zod `inputSchema` (AI SDK 5/6). There is no `parameters` field. Search/map/crawl/extract are omitted when the client cannot do them.
+Each tool uses Zod `inputSchema` (AI SDK 5/6). Search/map/crawl/extract are omitted when the client cannot do them.

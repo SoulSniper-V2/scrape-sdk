@@ -1,7 +1,9 @@
 ---
 title: Model Context Protocol
-description: Official MCP SDK stdio server with web_fetch and web_search.
+description: Full-page scrape, map, crawl, extract. Not a replacement for host WebSearch.
 ---
+
+Cursor, Claude Code, and Codex already have **WebSearch** and **WebFetch**. Claude Code's WebFetch **summarizes** the page. Codex search defaults to a **cache**. This server is for the full markdown body, site map, crawl, and JSON extract.
 
 ```json title="mcp.json"
 {
@@ -19,12 +21,12 @@ description: Official MCP SDK stdio server with web_fetch and web_search.
 }
 ```
 
-A copy lives at `examples/mcp.json`. The skill at `skills/scrape-sdk/` ships a sibling `mcp.json` so skill hosts can auto-attach the server.
+A copy lives at `examples/mcp.json`. The skill at `skills/scrape-sdk/` ships a sibling `mcp.json`.
 
-Built with `@modelcontextprotocol/sdk` (`McpServer` + `StdioServerTransport`), so Claude Desktop and Cursor get a real `initialize` handshake.
+Tools:
 
-Without keys, `web_fetch` and `web_search` still work via Jina + local. `map_site` / `crawl_site` / `extract_json` appear when a configured provider supports them.
-
-`web_fetch` truncates to 20_000 characters by default and returns `truncated` + `charCount`. Raise `maxChars` only when you need the rest of a page.
+- `scrape_url` — always. Full page markdown, default 20_000 chars, `truncated` + `charCount`. Named so it does not collide with host `WebFetch`.
+- `search_web` — only if `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` is set. Otherwise use the host WebSearch.
+- `map_site` / `crawl_site` / `extract_json` — when a configured provider supports them. Hosts do not ship these.
 
 `fromEnv()` reads `FIRECRAWL_API_KEY` (or `FIRECRAWL_KEY`), `TAVILY_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `BROWSERBASE_API_KEY`.

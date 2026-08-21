@@ -42,14 +42,14 @@ describe("AI SDK tools", () => {
     assert.equal(executed.truncated, false);
   });
 
-  it("createTools uses web_fetch and web_search names", () => {
+  it("createTools uses scrape_url and search_web names", () => {
     const client = createScrapeClient({ provider: mock });
     const tools = createTools(client);
-    assert.ok(tools.web_fetch);
-    assert.ok(tools.web_search);
+    assert.ok(tools.scrape_url);
+    assert.ok(tools.search_web);
     assert.ok(tools.map_site);
     assert.ok(tools.crawl_site);
     assert.ok(tools.extract_json);
-    assert.equal("scrape_web" in tools, false);
+    assert.equal("web_fetch" in tools, false);
   });
 });

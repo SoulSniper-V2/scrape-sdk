@@ -4,7 +4,10 @@ import { defineConfig, defineDocs } from "fumadocs-mdx/config";
 var docs = defineDocs({
   dir: "content/docs",
   docs: {
-    schema: pageSchema
+    schema: pageSchema,
+    postprocess: {
+      includeProcessedMarkdown: true
+    }
   },
   meta: {
     schema: metaSchema

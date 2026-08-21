@@ -1,0 +1,46 @@
+---
+title: Machine-readable documentation
+description: Use raw Markdown, LLM indexes, JSONL entities, and the schema map for agent retrieval.
+---
+
+The docs site exposes the active navigation through formats that do not require scraping rendered HTML.
+
+| Endpoint | Purpose |
+| :--- | :--- |
+| `/llms.txt` | Site-level LLM index |
+| `/docs/llms.txt` | Documentation-only index |
+| `/llms-full.txt` | Combined current documentation text |
+| `/feeds/docs.jsonl` | One typed JSON object per current page |
+| `/schemamap.xml` | Machine-readable surface map |
+| `/docs/<path>.md` | Raw Markdown for one current page |
+
+Every rendered page includes **Copy Markdown** and **View Markdown** controls.
+
+## Prefer canonical URLs
+
+Use current `/docs/...` URLs. Append `.md` to get the page as Markdown, for example `/docs/quickstart.md`.
+
+## Retrieve one page
+
+```bash
+curl https://scrape-sdk-olive.vercel.app/docs/quickstart.md
+```
+
+The response starts with the page title and canonical URL, then the Markdown body.
+
+## Retrieve the full corpus
+
+Use `/llms-full.txt` for a compact single request or `/feeds/docs.jsonl` when your indexer wants discrete route records.
+
+```bash
+curl https://scrape-sdk-olive.vercel.app/llms.txt
+curl https://scrape-sdk-olive.vercel.app/feeds/docs.jsonl
+```
+
+## Coding-agent skill
+
+```bash
+npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
+```
+
+Agents should refresh `/llms.txt` (or this page's Markdown) before integrating the package, instead of scraping the HTML docs.

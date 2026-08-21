@@ -43,7 +43,7 @@ export interface AgentTool<TIn extends z.ZodType, TOut> {
   execute: (input: z.infer<TIn>) => Promise<TOut>;
 }
 
-/** Industry name: web_fetch. Read one known URL into markdown without blowing the context window. */
+/** Read one known URL into markdown without blowing the context window. */
 export function scrapeTool(client: ScrapeClient): AgentTool<typeof fetchInput, {
   url: string;
   title: string;
@@ -56,7 +56,7 @@ export function scrapeTool(client: ScrapeClient): AgentTool<typeof fetchInput, {
 }> {
   return {
     description:
-      "web_fetch: scrape a known URL into clean markdown. Use when you already have a URL. Do not use this to discover pages — use web_search or map_site first. Content is truncated so it fits in context; if truncated is true and you need the rest, call again with a higher maxChars.",
+      "Scrape a known URL into clean markdown (full page body, not a summary). Use when you already have a URL. Do not use this to discover pages — search or map_site first. Content is truncated so it fits in context; if truncated is true and you need the rest, call again with a higher maxChars.",
     inputSchema: fetchInput,
     execute: async ({ url, maxChars }) => {
       const result = await client.scrape(url, {
@@ -89,7 +89,7 @@ export function searchTool(client: ScrapeClient): AgentTool<typeof searchInput, 
 }> {
   return {
     description:
-      "web_search: search the live web. Use when you do not already have a URL. Then web_fetch the 1–3 best results. Do not crawl from search snippets.",
+      "Search the live web via configured scrape providers (Tavily, Jina, Firecrawl). Use in an app agent that has no host WebSearch. Then scrape_url the 1–3 best results.",
     inputSchema: searchInput,
     execute: async ({ query, limit }) => {
       const result = await client.search(query, { limit });
@@ -114,7 +114,7 @@ export function crawlTool(client: ScrapeClient): AgentTool<typeof crawlInput, {
 }> {
   return {
     description:
-      "Crawl a site and return markdown per page. Expensive. Prefer map_site to list URLs, then web_fetch specific pages. Use crawl only when you need many pages of a known site in one call.",
+      "Crawl a site and return markdown per page. Expensive. Prefer map_site to list URLs, then scrape_url specific pages. Use crawl only when you need many pages of a known site in one call.",
     inputSchema: crawlInput,
     execute: async ({ url, limit, maxDepth }) => {
       const result = await client.crawl(url, { limit, maxDepth, maxChars: 6_000 });
@@ -140,7 +140,7 @@ export function extractTool(client: ScrapeClient): AgentTool<typeof extractInput
 }> {
   return {
     description:
-      "Extract structured JSON from a page using a JSON Schema. Prefer this over web_fetch when you need fields (price, title, author), not prose.",
+      "Extract structured JSON from a page using a JSON Schema. Prefer this over scrape_url when you need fields (price, title, author), not prose.",
     inputSchema: extractInput,
     execute: async ({ url, schema, prompt }) => {
       const result = await client.extract(url, { schema, prompt });
@@ -177,13 +177,13 @@ export function mapTool(client: ScrapeClient): AgentTool<typeof mapInput, {
 }
 
 /**
- * Agent toolset using the names models already know: web_fetch + web_search.
- * crawl_site / extract_json / map_site are added only when a provider can do them.
+ * Tools for an app you build (Vercel AI SDK). Cursor / Claude Code / Codex
+ * already have WebSearch + WebFetch — use the MCP server there, not these names.
  */
 export function createTools(client: ScrapeClient) {
   return {
-    web_fetch: scrapeTool(client),
-    ...(client.supports("search") ? { web_search: searchTool(client) } : {}),
+    scrape_url: scrapeTool(client),
+    ...(client.supports("search") ? { search_web: searchTool(client) } : {}),
     ...(client.supports("map") ? { map_site: mapTool(client) } : {}),
     ...(client.supports("crawl") ? { crawl_site: crawlTool(client) } : {}),
     ...(client.supports("extract") ? { extract_json: extractTool(client) } : {}),
