@@ -124,7 +124,7 @@ export default function Home() {
     intro
       .from('.home-nav', { y: -20, opacity: 0, duration: 0.7 })
       .from('.hero-reveal', { y: 40, opacity: 0, duration: 0.9, stagger: 0.12 }, '-=0.4')
-      .from('.hero-art', { scale: 0.92, opacity: 0, y: 30, duration: 1.2 }, '-=0.6');
+      .from('.hero-art', { opacity: 0, y: 24, duration: 1.2 }, '-=0.6');
 
     // 2. Manifesto Word-by-Word Scroll Reveal
     const words = gsap.utils.toArray<HTMLElement>('.manifesto-word');
@@ -246,8 +246,8 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-24 pb-28 px-6 text-center max-w-[1240px] mx-auto overflow-hidden">
-        <div className="relative z-10">
+      <section className="relative pt-24 pb-28 text-center overflow-hidden">
+        <div className="relative z-10 px-6 max-w-[1240px] mx-auto">
           <h1 className="hero-reveal font-editorial text-[clamp(3.8rem,8vw,8rem)] font-normal leading-[0.9] tracking-[-0.065em] text-[#f4f3ef] max-w-4xl mx-auto">
             <span>Web scraping,</span>
             <br />
@@ -299,12 +299,12 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
         {/* Hero Artwork Ribbon */}
         <div className="hero-art" aria-hidden="true">
           <Image
-            src="/images/scrape-hero-ribbon.jpg"
-            alt="Scrape SDK Hero Ribbon"
-            width={1920}
-            height={1080}
+            src="/images/scrape-hero-ribbon.webp"
+            alt=""
+            fill
             priority
             unoptimized
+            sizes="100vw"
           />
         </div>
       </section>

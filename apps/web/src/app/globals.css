@@ -25,44 +25,28 @@ body {
 
 .hero-art {
   position: absolute;
-  bottom: 0px;
+  bottom: -6%;
   left: 0;
-  right: 0;
   z-index: 0;
   width: 100%;
-  height: 280px;
+  height: min(56vw, 620px);
   overflow: hidden;
   pointer-events: none;
-  opacity: 0.75;
 }
 
 .hero-art img {
-  width: 100%;
-  height: 100%;
   object-fit: cover;
-  object-position: center bottom;
-}
-
-.hero-art::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 1;
-  height: 90px;
-  background: linear-gradient(to bottom, #090908 0%, transparent 100%);
-  content: "";
+  object-position: 36% 48%;
+  transform: scale(1.18);
 }
 
 .hero-art::after {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  left: 0;
+  inset: 0;
   z-index: 1;
-  height: 60px;
-  background: linear-gradient(to top, #090908 0%, transparent 100%);
+  background: linear-gradient(to bottom, #090908 0%, transparent 38%);
   content: "";
+  pointer-events: none;
 }
 
 @keyframes marquee {
