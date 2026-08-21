@@ -49,7 +49,7 @@ jobs:
           publish_if_new .
           cd ../mcp-server
           npm install
-          npm run build
+          NODE_OPTIONS=--max-old-space-size=4096 npm run build
           publish_if_new .
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

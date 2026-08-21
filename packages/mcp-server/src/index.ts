@@ -3,7 +3,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { fromEnv } from "scrape-sdk";
-import { AGENT_MAX_CHARS } from "scrape-sdk";
+
+const AGENT_MAX_CHARS = 20_000;
 
 function jsonText(value: unknown) {
   return {
