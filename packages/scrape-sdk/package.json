@@ -93,7 +93,7 @@
     "url": "git+https://github.com/SoulSniper-V2/scrape-sdk.git",
     "directory": "packages/scrape-sdk"
   },
-  "homepage": "https://github.com/SoulSniper-V2/scrape-sdk#readme",
+  "homepage": "https://www.scrape-sdk.com",
   "bugs": {
     "url": "https://github.com/SoulSniper-V2/scrape-sdk/issues"
   },

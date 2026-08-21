@@ -93,7 +93,7 @@ npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
 # Or paste this prompt into your agent:
 Install the scrape-sdk skill for yourself:
 Run: npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
-If that command is not available, save https://scrape-sdk-olive.vercel.app/skills/scrape-sdk/SKILL.md into your skills directory as scrape-sdk/SKILL.md instead.
+If that command is not available, save https://www.scrape-sdk.com/skills/scrape-sdk/SKILL.md into your skills directory as scrape-sdk/SKILL.md instead.
 Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown from any URL.`,
 
   cli: `# Instant CLI extraction
@@ -197,7 +197,7 @@ export default function Home() {
 
 Run: npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
 
-If that command is not available, save https://scrape-sdk-olive.vercel.app/skills/scrape-sdk/SKILL.md into your skills directory as scrape-sdk/SKILL.md instead.
+If that command is not available, save https://www.scrape-sdk.com/skills/scrape-sdk/SKILL.md into your skills directory as scrape-sdk/SKILL.md instead.
 
 Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown from any URL.`;
     navigator.clipboard.writeText(promptText);

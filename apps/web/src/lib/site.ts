@@ -1,8 +1,5 @@
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "https://scrape-sdk-olive.vercel.app");
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.scrape-sdk.com";
 
 export function markdownUrl(pageUrl: string): string {
   if (pageUrl === "/docs") return "/docs.md";

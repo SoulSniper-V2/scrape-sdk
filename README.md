@@ -10,6 +10,8 @@ One TypeScript client for scraping URLs to markdown. Swap Firecrawl, Jina, Tavil
 - CLI: `npx scrape-sdk <url>`
 - MIT licensed
 
+Docs: https://www.scrape-sdk.com
+
 ## Install
 
 ```bash

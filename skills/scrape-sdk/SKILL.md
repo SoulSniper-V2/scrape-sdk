@@ -60,14 +60,14 @@ npm install scrape-sdk
 npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
 ```
 
-Docs: https://scrape-sdk-olive.vercel.app/docs
+Docs: https://www.scrape-sdk.com/docs
 
 Machine-readable (do not scrape HTML):
 
-- https://scrape-sdk-olive.vercel.app/llms.txt
-- https://scrape-sdk-olive.vercel.app/docs/quickstart.md
-- https://scrape-sdk-olive.vercel.app/feeds/docs.jsonl
-- https://scrape-sdk-olive.vercel.app/docs/agents/machine-readable-docs
+- https://www.scrape-sdk.com/llms.txt
+- https://www.scrape-sdk.com/docs/quickstart.md
+- https://www.scrape-sdk.com/feeds/docs.jsonl
+- https://www.scrape-sdk.com/docs/agents/machine-readable-docs
 
 ## Provider facts (do not guess endpoints)
 
