@@ -7,15 +7,13 @@
   <a href="https://x.com/be_arsh"><img alt="Follow @be_arsh on X" src="https://shieldcn.dev/x/follow/be_arsh.svg?variant=branded&mode=dark" /></a>
 </p>
 
-One TypeScript client for scraping URLs to markdown. Swap Firecrawl, Jina, Tavily, Spider, Browserbase, and local Cheerio without rewriting callers.
+One TypeScript client for scraping URLs to markdown. Pick Firecrawl, Jina, Tavily, Spider, Browserbase, or local Cheerio, then fail over without rewriting callers.
 
-- Honest adapters against current vendor APIs (Firecrawl v2, Jina JSON, Tavily Bearer, Browserbase Fetch)
-- Abortable timeouts, retry-only-on-retryable-errors, and automatic failover
-- `scrape(url)` is the product. `map()`, `crawl()`, `extract()`, `search()`, `scrapeMany()` when a provider can do them
-- Optional MCP for coding agents that need a **full page** (Claude Code WebFetch summarizes), plus map/crawl/extract. Not a replacement for host WebSearch.
-- Vercel AI SDK tools for **app** agents that have no built-in web tools
-- CLI: `npx scrape-sdk <url>`
-- MIT licensed
+- Adapters against live vendor APIs: Firecrawl v2, Jina, Tavily, Spider.cloud, Browserbase Fetch, and Cheerio
+- `scrape(url)` is the verb. `map()`, `crawl()`, `extract()`, `search()`, and `scrapeMany()` when a provider can do them
+- Abortable timeouts, retries on retryable errors, and automatic failover
+- `fromEnv()` builds the client from the keys you already have
+- CLI, Vercel AI SDK tools, and an MCP server for full-page markdown
 
 ## Install
 
@@ -23,10 +21,28 @@ One TypeScript client for scraping URLs to markdown. Swap Firecrawl, Jina, Tavil
 npm install scrape-sdk
 ```
 
-## Quickstart
+Works on Node 20+ and Bun. Keep provider API keys out of client code.
 
-```typescript
-import { createScrapeClient, fromEnv } from "scrape-sdk";
+## Usage
+
+```ts
+import { fromEnv } from "scrape-sdk";
+
+const scraper = fromEnv();
+
+const page = await scraper.scrape("https://stripe.com", {
+  format: "markdown",
+  onlyMainContent: true,
+});
+
+console.log(page.markdown);
+console.log(`via ${page.provider} in ${page.latencyMs}ms`);
+```
+
+Or pick the order yourself:
+
+```ts
+import { createScrapeClient } from "scrape-sdk";
 import { firecrawl } from "scrape-sdk/firecrawl";
 import { jina } from "scrape-sdk/jina";
 import { local } from "scrape-sdk/local";
@@ -37,72 +53,44 @@ const scraper = createScrapeClient({
     jina(),
     local(),
   ],
-  strategy: "priority", // or "cost" to prefer cheaper backends first
-  cache: { ttlMs: 60_000 },
 });
-
-const page = await scraper.scrape("https://news.ycombinator.com", {
-  format: "markdown",
-  onlyMainContent: true,
-});
-
-console.log(page.markdown);
-console.log(`via ${page.provider} in ${page.latencyMs}ms`);
 ```
 
-Or build from environment keys:
+Providers that cannot perform an operation are skipped. If none can, you get a `CapabilityError` instead of a fake result.
 
-```typescript
-import { fromEnv } from "scrape-sdk";
-
-const scraper = fromEnv(); // FIRECRAWL_API_KEY, TAVILY_API_KEY, JINA_API_KEY, ...
-await scraper.search("firecrawl vs jina reader");
-```
-
-## What each method does
+## Methods
 
 | Method | Use when |
 | :--- | :--- |
-| `scrape(url)` | You already have a URL. Pass `maxChars` for LLM callers. |
+| `scrape(url)` | You already have a URL |
 | `search(query)` | You need to find URLs |
-| `map(url)` | You need a site's URL list, not bodies (Firecrawl) |
+| `map(url)` | You need a site's URL list, not bodies |
 | `crawl(url)` | You need many page bodies from one site |
 | `extract(url, { schema })` | You need structured JSON |
 | `scrapeMany(urls)` | You have a list of URLs |
 
-Providers that do not support an operation are skipped. If none can, you get a `CapabilityError` instead of a fake result.
-
 ## Providers
 
-| Provider | Import | Needs key | scrape | search | map | crawl | extract | JS |
+| Provider | Import | Key | scrape | search | map | crawl | extract | JS |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Firecrawl v2 | `scrape-sdk/firecrawl` | yes | yes | yes | yes | yes (polls job id) | yes | yes |
+| Firecrawl v2 | `scrape-sdk/firecrawl` | yes | yes | yes | yes | yes | yes | yes |
 | Jina | `scrape-sdk/jina` | optional | yes | yes | — | — | — | yes |
-| Tavily | `scrape-sdk/tavily` | yes | extract | yes | — | — | — | — |
-| Spider.cloud | `scrape-sdk/spider` | yes | `/scrape` | — | — | `/crawl` | — | yes |
-| Browserbase | `scrape-sdk/browserbase` | yes | Fetch API | — | — | — | JSON schema | — |
-| Local | `scrape-sdk/local` | no | static HTML | — | — | — | — | no |
+| Tavily | `scrape-sdk/tavily` | yes | yes | yes | — | — | — | — |
+| Spider.cloud | `scrape-sdk/spider` | yes | yes | — | — | yes | — | yes |
+| Browserbase | `scrape-sdk/browserbase` | yes | yes | — | — | — | yes | — |
+| Local Cheerio | `scrape-sdk/local` | no | yes | — | — | — | — | no |
 
-Browserbase is the Fetch endpoint (`POST /v1/fetch`), not a Playwright session. It does not execute page JavaScript.
+Browserbase is `POST /v1/fetch`, not a Playwright session, so it does not run page JavaScript. Firecrawl crawl returns a job id; the adapter polls until it finishes.
 
-## Agent tools (Vercel AI SDK)
+## CLI
 
-```typescript
-import { generateText, stepCountIs } from "ai";
-import { fromEnv } from "scrape-sdk";
-import { createTools } from "scrape-sdk/ai";
-
-const scraper = fromEnv();
-
-const { text } = await generateText({
-  model: "openai/gpt-5.4",
-  tools: createTools(scraper),
-  stopWhen: stepCountIs(6),
-  prompt: "What are the top stories on Hacker News right now?",
-});
+```bash
+npx scrape-sdk https://stripe.com
+npx scrape-sdk search "vercel ai sdk tools"
+npx scrape-sdk map https://docs.firecrawl.dev
+npx scrape-sdk crawl https://docs.firecrawl.dev --limit 5 --json
+npx scrape-sdk scrape https://example.com --provider local
 ```
-
-Tools use AI SDK `inputSchema` (Zod), not the old `parameters` field. Names: `scrape_url`, plus `search_web` / `map_site` / `crawl_site` / `extract_json` when the client supports them. `scrape_url` defaults to 20_000 characters and returns `truncated`. Use this in **your** app agent. Cursor, Claude Code, and Codex already have WebSearch/WebFetch — do not duplicate those with this package.
 
 ## MCP
 
@@ -121,17 +109,17 @@ Tools use AI SDK `inputSchema` (Zod), not the old `parameters` field. Names: `sc
 }
 ```
 
-The server is built on `@modelcontextprotocol/sdk`. Tools: `scrape_url` (full markdown, not a host WebFetch summary), plus `map_site` / `crawl_site` / `extract_json` when keys allow. `search_web` is registered only if `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` is set — otherwise use the host WebSearch.
+`scrape_url` returns the full page as markdown. `map_site`, `crawl_site`, and `extract_json` register when the configured providers support them.
 
-## CLI
+## Documentation
 
-```bash
-npx scrape-sdk https://stripe.com
-npx scrape-sdk search "vercel ai sdk tools"
-npx scrape-sdk map https://docs.firecrawl.dev
-npx scrape-sdk crawl https://docs.firecrawl.dev --limit 5 --json
-npx scrape-sdk scrape https://example.com --provider local
-```
+Full docs live at **[scrape-sdk.com/docs](https://www.scrape-sdk.com/docs)**. Good places to start:
+
+- [Quickstart](https://www.scrape-sdk.com/docs/quickstart)
+- [Providers](https://www.scrape-sdk.com/docs/providers)
+- [Failover](https://www.scrape-sdk.com/docs/concepts/failover-matrix)
+- [MCP](https://www.scrape-sdk.com/docs/guides/model-context-protocol)
+- [Vercel AI SDK tools](https://www.scrape-sdk.com/docs/guides/vercel-ai-sdk)
 
 ## License
 
