@@ -1,6 +1,6 @@
 {
   "name": "scrape-sdk-mcp",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "MCP server for scrape-sdk — full-page scrape when host WebFetch only summarizes. Also map, crawl, extract.",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.2",
-    "scrape-sdk": "*",
+    "scrape-sdk": "^0.2.2",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -23,7 +23,27 @@
     "typescript": "^5.5.4"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
-  "license": "MIT"
+  "keywords": [
+    "mcp",
+    "scrape-sdk",
+    "web-scraping",
+    "markdown",
+    "firecrawl",
+    "claude",
+    "cursor"
+  ],
+  "author": "Arush Wadhawan <https://x.com/be_arsh>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SoulSniper-V2/scrape-sdk.git",
+    "directory": "packages/mcp-server"
+  },
+  "homepage": "https://www.scrape-sdk.com/docs/guides/model-context-protocol",
+  "bugs": {
+    "url": "https://github.com/SoulSniper-V2/scrape-sdk/issues"
+  }
 }
