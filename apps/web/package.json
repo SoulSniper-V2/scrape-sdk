@@ -11,8 +11,9 @@
     "@gsap/react": "^2.1.2",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/mdx": "^2.0.14",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "cheerio": "^1.0.0",
-    "scrape-sdk": "*",
     "clsx": "^2.1.1",
     "fumadocs-core": "^16.14.5",
     "fumadocs-mdx": "^15.3.0",
@@ -22,6 +23,7 @@
     "next": "^16.3.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "scrape-sdk": "*",
     "tailwind-merge": "^2.4.0",
     "turndown": "^7.2.0"
   },
