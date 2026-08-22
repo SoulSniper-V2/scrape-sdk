@@ -22,7 +22,7 @@ async function main(): Promise<void> {
   const client = fromEnv({ cache: { ttlMs: 60_000 } });
   const server = new McpServer({
     name: "scrape-sdk",
-    version: "0.2.1",
+    version: "0.2.2",
   });
 
   server.tool(
