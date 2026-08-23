@@ -5,7 +5,7 @@ license: MIT
 compatibility: Node.js 18+. Network access. Optional FIRECRAWL_API_KEY, TAVILY_API_KEY, JINA_API_KEY, SPIDER_API_KEY, BROWSERBASE_API_KEY.
 metadata:
   author: Arush Wadhawan
-  version: "0.2.2"
+  version: "0.2.3"
 ---
 
 # Scrape SDK

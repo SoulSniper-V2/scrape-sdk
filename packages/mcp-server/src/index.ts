@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { createRequire } from "node:module";
 import { z } from "zod";
 import { fromEnv } from "scrape-sdk";
 
 const AGENT_MAX_CHARS = 20_000;
+const require = createRequire(import.meta.url);
+const packageJson = require("../package.json") as { version: string };
 
 function jsonText(value: unknown) {
   return {
@@ -22,7 +25,7 @@ async function main(): Promise<void> {
   const client = fromEnv({ cache: { ttlMs: 60_000 } });
   const server = new McpServer({
     name: "scrape-sdk",
-    version: "0.2.3",
+    version: packageJson.version,
   });
 
   server.tool(

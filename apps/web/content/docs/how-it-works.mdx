@@ -4,7 +4,7 @@ description: Routing, retries, timeouts, and capabilities.
 ---
 
 1. **Validate** the URL (`http` / `https` only).
-2. **Prefer `/llms.txt`** on a site root or `/docs` path (skip article URLs). A 1.5s probe; HTML scrape if it misses.
+2. **Prefer `/llms.txt`** on a site root or `/docs` path when the requested options are compatible (skip article URLs). The probe is bounded by the client timeout; HTML scrape if it misses.
 3. **Select** providers that advertise the required capability (`scrape`, `search`, `crawl`, `extract`, `js`).
 4. **Order** them by `strategy`: `priority` (config order) or `cost` (cheaper first).
 5. **Execute** with an `AbortSignal` timeout. Retryable errors (429, 5xx, timeout) retry on the same provider, then fail over. Auth errors (401/403) do not retry.

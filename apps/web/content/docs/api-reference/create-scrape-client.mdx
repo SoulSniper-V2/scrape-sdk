@@ -24,6 +24,8 @@ scrape(url) // same chain, no client. Also search/map/crawl/extract/scrapeMany
 ### Methods
 
 - `scrape(url, options?)` — `maxChars` truncates markdown and sets `truncated` / `charCount`. Site/docs roots try `/llms.txt` first (`preferLlmsTxt`, default true). `failedOverFrom` lists providers that died before the winner.
+- Scrape options include `format: "markdown" | "html" | "text" | "json"`, `signal`, `waitForMs`, link/image inclusion, and target-page `headers` when the selected adapter supports them. Requests with target-page headers bypass the in-memory cache; unsupported options fail over or raise `UnsupportedOptionError`.
+- `maxChars` is a hard maximum for returned markdown/text, including the `[truncated]` marker.
 - `scrapeMany(urls, { concurrency?, ...scrapeOptions })`
 - `search(query, { limit?, includeAnswer?, includeRawContent? })`
 - `map(url, { limit?, search? })` — URL list without page bodies (Firecrawl)
