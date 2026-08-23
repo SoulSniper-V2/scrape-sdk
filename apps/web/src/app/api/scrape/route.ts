@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createScrapeClient } from "scrape-sdk";
 import { jina } from "scrape-sdk/jina";
 import { local } from "scrape-sdk/local";
-import { assertPublicHttpUrl, createSafeFetch } from "./security";
+import { assertPublicHttpUrl, createSafeFetch, PublicUrlError, ResponseLimitError } from "./security";
 
 export const runtime = "nodejs";
 
@@ -54,16 +54,13 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Scrape failed";
-    const status = /URL|Private network|provider|credentials/i.test(message)
-      ? 400
-      : /Response exceeds/i.test(message)
-        ? 413
-        : 500;
+    const status = err instanceof PublicUrlError ? 400 : err instanceof ResponseLimitError ? 413 : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }
 
 function requestAddress(req: Request): string {
+  // Vercel overwrites X-Forwarded-For. If another proxy/CDN fronts this route, revisit this key.
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 }
 

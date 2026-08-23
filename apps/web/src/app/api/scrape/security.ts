@@ -1,26 +1,52 @@
 import { lookup } from "node:dns/promises";
+import * as http from "node:http";
+import * as https from "node:https";
 import { isIP } from "node:net";
 
-const MAX_REDIRECTS = 3;
+const MAX_REDIRECTS = 5;
 const MAX_RESPONSE_BYTES = 2_000_000;
+
+export class PublicUrlError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PublicUrlError";
+  }
+}
+
+export class ResponseLimitError extends Error {
+  constructor() {
+    super(`Response exceeds the ${MAX_RESPONSE_BYTES}-byte limit`);
+    this.name = "ResponseLimitError";
+  }
+}
 
 export async function assertPublicHttpUrl(value: string): Promise<URL> {
   let parsed: URL;
   try {
     parsed = new URL(value);
   } catch {
-    throw new Error("URL must be an absolute http(s) URL");
+    throw new PublicUrlError("URL must be an absolute http(s) URL");
   }
+  return (await resolvePublicHttpUrl(parsed)).url;
+}
+
+interface ResolvedPublicUrl {
+  url: URL;
+  address: string;
+  family: 4 | 6;
+}
+
+async function resolvePublicHttpUrl(parsed: URL): Promise<ResolvedPublicUrl> {
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error("URL must be an absolute http(s) URL");
+    throw new PublicUrlError("URL must be an absolute http(s) URL");
   }
   if (parsed.username || parsed.password) {
-    throw new Error("URLs with embedded credentials are not allowed");
+    throw new PublicUrlError("URLs with embedded credentials are not allowed");
   }
 
   const hostname = parsed.hostname.replace(/^\[|\]$/g, "").toLowerCase();
   if (hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local")) {
-    throw new Error("Private network URLs are not allowed");
+    throw new PublicUrlError("Private network URLs are not allowed");
   }
 
   let addresses: Array<{ address: string }>;
@@ -29,15 +55,28 @@ export async function assertPublicHttpUrl(value: string): Promise<URL> {
       ? [{ address: hostname }]
       : await lookup(hostname, { all: true, verbatim: true });
   } catch {
-    throw new Error("URL could not be resolved");
+    throw new PublicUrlError("URL could not be resolved");
   }
   if (addresses.length === 0 || addresses.some(({ address }) => isPrivateAddress(address))) {
-    throw new Error("Private network URLs are not allowed");
+    throw new PublicUrlError("Private network URLs are not allowed");
   }
-  return parsed;
+
+  const address = addresses[0]?.address;
+  const family = address ? isIP(address) : 0;
+  if (!address || (family !== 4 && family !== 6)) {
+    throw new PublicUrlError("URL could not be resolved");
+  }
+  return { url: parsed, address, family };
 }
 
-export function createSafeFetch(fetchFn: typeof fetch = globalThis.fetch.bind(globalThis)): typeof fetch {
+/**
+ * The default transport pins each connection to the address checked above.
+ * Injected transports are intended for tests or callers that provide their own
+ * connection-level DNS policy.
+ */
+export function createSafeFetch(fetchFn?: typeof fetch): typeof fetch {
+  const usePinnedTransport = fetchFn === undefined;
+  const transport = fetchFn ?? globalThis.fetch.bind(globalThis);
   return (async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     let current = new URL(input instanceof Request ? input.url : String(input));
     const requestInit: RequestInit = {
@@ -50,8 +89,10 @@ export function createSafeFetch(fetchFn: typeof fetch = globalThis.fetch.bind(gl
 
     for (let redirect = 0; ; redirect++) {
       if (requestInit.signal?.aborted) throw requestInit.signal.reason ?? abortError();
-      await assertPublicHttpUrl(current.href);
-      const response = await fetchFn(current.href, requestInit);
+      const resolved = await resolvePublicHttpUrl(current);
+      const response = usePinnedTransport
+        ? await fetchPinned(resolved, requestInit)
+        : await transport(current.href, requestInit);
       if (response.status < 300 || response.status >= 400) return capResponse(response);
 
       const location = response.headers.get("location");
@@ -67,6 +108,100 @@ export function createSafeFetch(fetchFn: typeof fetch = globalThis.fetch.bind(gl
       current = next;
     }
   }) as typeof fetch;
+}
+
+async function fetchPinned(resolved: ResolvedPublicUrl, init: RequestInit): Promise<Response> {
+  if (init.signal?.aborted) throw init.signal.reason ?? abortError();
+  const headers = new Headers(init.headers);
+  if (!headers.has("accept-encoding")) headers.set("accept-encoding", "identity");
+  const body = await requestBody(init.body);
+  const request = resolved.url.protocol === "https:" ? https.request : http.request;
+  const headerRecord: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    headerRecord[key] = value;
+  });
+
+  return new Promise<Response>((resolve, reject) => {
+    let settled = false;
+    const fail = (error: unknown) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+    const nodeRequest = request(
+      {
+        protocol: resolved.url.protocol,
+        hostname: resolved.url.hostname,
+        port: resolved.url.port || undefined,
+        path: `${resolved.url.pathname}${resolved.url.search}`,
+        method: init.method || "GET",
+        headers: headerRecord,
+        lookup: (_hostname, _options, callback) => callback(null, resolved.address, resolved.family),
+        signal: init.signal ?? undefined,
+      },
+      (nodeResponse) => {
+        const declaredLength = Number(nodeResponse.headers["content-length"]);
+        if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
+          nodeResponse.resume();
+          fail(new ResponseLimitError());
+          return;
+        }
+
+        const chunks: Uint8Array[] = [];
+        let total = 0;
+        nodeResponse.on("data", (chunk: Uint8Array) => {
+          total += chunk.byteLength;
+          if (total > MAX_RESPONSE_BYTES) {
+            nodeResponse.destroy();
+            fail(new ResponseLimitError());
+            return;
+          }
+          chunks.push(chunk);
+        });
+        nodeResponse.on("end", () => {
+          if (settled) return;
+          const bytes = new Uint8Array(total);
+          let offset = 0;
+          for (const chunk of chunks) {
+            bytes.set(chunk, offset);
+            offset += chunk.byteLength;
+          }
+          const responseHeaders = new Headers();
+          for (const [key, value] of Object.entries(nodeResponse.headers)) {
+            if (value === undefined) continue;
+            for (const entry of Array.isArray(value) ? value : [value]) {
+              responseHeaders.append(key, entry);
+            }
+          }
+          responseHeaders.set("content-length", String(bytes.byteLength));
+          settled = true;
+          resolve(
+            new Response(bytes, {
+              status: nodeResponse.statusCode ?? 500,
+              statusText: nodeResponse.statusMessage ?? "",
+              headers: responseHeaders,
+            })
+          );
+        });
+        nodeResponse.on("error", fail);
+      }
+    );
+    nodeRequest.on("error", fail);
+    if (body !== undefined) nodeRequest.write(body);
+    nodeRequest.end();
+  });
+}
+
+async function requestBody(body: BodyInit | null | undefined): Promise<string | Uint8Array | undefined> {
+  if (body === null || body === undefined) return undefined;
+  if (typeof body === "string") return body;
+  if (body instanceof URLSearchParams) return body.toString();
+  if (body instanceof ArrayBuffer) return new Uint8Array(body);
+  if (ArrayBuffer.isView(body)) {
+    return new Uint8Array(body.buffer, body.byteOffset, body.byteLength);
+  }
+  if (body instanceof Blob) return new Uint8Array(await body.arrayBuffer());
+  throw new Error("Safe fetch does not support streaming request bodies");
 }
 
 export function isPrivateAddress(address: string): boolean {
@@ -125,7 +260,7 @@ function mappedIpv4(address: string): string | undefined {
 async function capResponse(response: Response): Promise<Response> {
   const declaredLength = Number(response.headers.get("content-length"));
   if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) {
-    throw new Error(`Response exceeds the ${MAX_RESPONSE_BYTES}-byte limit`);
+    throw new ResponseLimitError();
   }
   if (!response.body) return response;
 
@@ -139,7 +274,7 @@ async function capResponse(response: Response): Promise<Response> {
       total += value.byteLength;
       if (total > MAX_RESPONSE_BYTES) {
         await reader.cancel();
-        throw new Error(`Response exceeds the ${MAX_RESPONSE_BYTES}-byte limit`);
+        throw new ResponseLimitError();
       }
       chunks.push(value);
     }
