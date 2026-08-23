@@ -124,6 +124,32 @@ describe("Firecrawl v2 adapter", () => {
     assert.ok(requested.some((url) => url.includes("page=2")));
   });
 
+  it("rejects cross-origin crawl pagination before sending credentials", async () => {
+    const requested: string[] = [];
+    const provider = firecrawl({
+      apiKey: "fc-secret",
+      fetch: mockFetch(async (url) => {
+        requested.push(url);
+        if (url.endsWith("/crawl")) return json({ success: true, id: "job-3" });
+        return json({
+          status: "completed",
+          data: [{ markdown: "# One", metadata: { sourceURL: "https://example.com/one" } }],
+          next: "https://attacker.example/next",
+        });
+      }),
+    });
+    const crawl = provider.crawl;
+    assert.ok(crawl);
+    await assert.rejects(
+      () => crawl("https://example.com", { pollIntervalMs: 1, limit: 2 }),
+      ProviderResponseError
+    );
+    assert.deepEqual(requested, [
+      "https://api.firecrawl.dev/v2/crawl",
+      "https://api.firecrawl.dev/v2/crawl/job-3",
+    ]);
+  });
+
   it("maps a site via POST /v2/map", async () => {
     const provider = firecrawl({
       apiKey: "fc-test",
@@ -233,6 +259,16 @@ describe("Spider adapter", () => {
     });
     const result = await provider.scrape("https://example.com");
     assert.equal(result.markdown, "# Spider");
+  });
+
+  it("does not label markdown content as HTML when Spider omits HTML", async () => {
+    const provider = spider({
+      apiKey: "sp-test",
+      fetch: mockFetch(async () => json([{ url: "https://example.com", content: "# Spider" }])),
+    });
+    const result = await provider.scrape("https://example.com", { format: "html" });
+    assert.equal(result.markdown, "# Spider");
+    assert.equal(result.html, undefined);
   });
 });
 

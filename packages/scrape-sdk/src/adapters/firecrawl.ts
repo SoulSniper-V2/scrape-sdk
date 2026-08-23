@@ -274,8 +274,13 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
 
 function resolveNextPage(next: string, apiUrl: string): string {
   try {
-    return new URL(next, `${apiUrl}/`).href;
-  } catch {
+    const resolved = new URL(next, `${apiUrl}/`);
+    if (resolved.origin !== new URL(apiUrl).origin) {
+      throw new ProviderResponseError("firecrawl", "Firecrawl returned a cross-origin crawl pagination URL");
+    }
+    return resolved.href;
+  } catch (error) {
+    if (error instanceof ProviderResponseError) throw error;
     throw new ProviderResponseError("firecrawl", "Firecrawl returned an invalid crawl pagination URL");
   }
 }

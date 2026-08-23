@@ -112,7 +112,7 @@ function mapPage(
     url: page.url || url,
     title: page.title || "",
     markdown,
-    html: format === "html" ? page.html || page.content : page.html,
+    html: page.html,
     text: format === "text" ? markdownToText(markdown) : undefined,
     metadata: { statusCode: page.status ?? 200 },
     provider: "spider",
