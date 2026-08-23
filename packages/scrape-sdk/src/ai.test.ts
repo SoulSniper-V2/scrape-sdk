@@ -28,6 +28,19 @@ const mock: ScrapeProvider = {
     provider: "mock",
     latencyMs: 1,
   }),
+  crawl: async (url) => ({
+    baseUrl: url,
+    pages: [],
+    totalPages: 0,
+    provider: "mock",
+    latencyMs: 1,
+  }),
+  extract: async (url) => ({
+    url,
+    data: { ok: true },
+    provider: "mock",
+    latencyMs: 1,
+  }),
 };
 
 describe("AI SDK tools", () => {

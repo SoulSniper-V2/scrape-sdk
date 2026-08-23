@@ -10,8 +10,10 @@ import { local } from "./adapters/local.js";
 export interface FromEnvOptions {
   fetch?: typeof fetch;
   timeoutMs?: number;
+  retries?: number;
   strategy?: ScrapeClientConfig["strategy"];
   cache?: ScrapeClientConfig["cache"];
+  onFailover?: ScrapeClientConfig["onFailover"];
 }
 
 /**
@@ -38,8 +40,10 @@ export function fromEnv(options: FromEnvOptions = {}): ScrapeClient {
   return new ScrapeClient({
     providers,
     timeoutMs: options.timeoutMs,
+    retries: options.retries,
     strategy: options.strategy ?? "priority",
     cache: options.cache ?? { ttlMs: 60_000 },
     fetch: fetchFn,
+    onFailover: options.onFailover,
   });
 }

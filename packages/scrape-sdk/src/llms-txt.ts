@@ -8,28 +8,56 @@ const PROBE_MS = 1_500;
 export async function tryLlmsTxt(
   url: string,
   fetchFn: typeof fetch,
-  signal?: AbortSignal
+  options: LlmsTxtOptions = {}
 ): Promise<ScrapeResult | undefined> {
   const candidates = llmsTxtCandidates(url);
   if (candidates.length === 0) return undefined;
 
   const startTime = Date.now();
+  const deadline = startTime + (options.timeoutMs ?? PROBE_MS);
   for (const candidate of candidates) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), PROBE_MS);
-    const merged = mergeSignals(signal, controller.signal);
-    try {
-      const response = await fetchFn(candidate, {
+    const probeMs = Math.min(PROBE_MS, remaining);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let callerAbortHandler: (() => void) | undefined;
+    const merged = mergeSignals(options.signal, controller.signal);
+    const operation = Promise.resolve().then(() =>
+      fetchFn(candidate, {
         headers: {
           Accept: "text/plain, text/markdown;q=0.9, */*;q=0.1",
           "User-Agent": "Mozilla/5.0 (compatible; ScrapeSDK/0.2; +https://github.com/SoulSniper-V2/scrape-sdk)",
+          ...options.headers,
         },
         signal: merged,
-      });
+      })
+    );
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        reject(new Error(`llms.txt probe timed out after ${probeMs}ms`));
+      }, probeMs);
+    });
+    const callerAbort = options.signal
+      ? new Promise<never>((_, reject) => {
+          callerAbortHandler = () => reject(abortReason(options.signal!));
+          if (options.signal!.aborted) callerAbortHandler();
+          else options.signal!.addEventListener("abort", callerAbortHandler, { once: true });
+      })
+      : undefined;
+    let bodyOperation: Promise<string> | undefined;
+    try {
+      const response = await Promise.race(
+        callerAbort ? [operation, timeout, callerAbort] : [operation, timeout]
+      );
       if (!response.ok) continue;
       const contentType = response.headers.get("content-type") || "";
       if (contentType.includes("html")) continue;
-      const body = await response.text();
+      bodyOperation = Promise.resolve().then(() => response.text());
+      const body = await Promise.race(
+        callerAbort ? [bodyOperation, timeout, callerAbort] : [bodyOperation, timeout]
+      );
       if (!looksLikeLlmsTxt(body)) continue;
       return {
         url: candidate,
@@ -40,13 +68,24 @@ export async function tryLlmsTxt(
         latencyMs: Date.now() - startTime,
       };
     } catch (err) {
-      if (signal?.aborted) throw err;
+      if (options.signal?.aborted) throw err;
       continue;
     } finally {
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
+      if (options.signal && callerAbortHandler) {
+        options.signal.removeEventListener("abort", callerAbortHandler);
+      }
+      void operation.catch(() => undefined);
+      void bodyOperation?.catch(() => undefined);
     }
   }
   return undefined;
+}
+
+export interface LlmsTxtOptions {
+  signal?: AbortSignal;
+  headers?: Record<string, string>;
+  timeoutMs?: number;
 }
 
 export function looksLikeLlmsTxt(body: string): boolean {
@@ -55,4 +94,11 @@ export function looksLikeLlmsTxt(body: string): boolean {
   const lower = trimmed.slice(0, 200).toLowerCase();
   if (lower.startsWith("<!doctype") || lower.startsWith("<html")) return false;
   return trimmed.startsWith("#") || trimmed.includes("](http") || /\bllms\.txt\b/i.test(trimmed);
+}
+
+function abortReason(signal: AbortSignal): Error {
+  if (signal.reason instanceof Error) return signal.reason;
+  const error = new Error(signal.reason === undefined ? "The operation was aborted" : String(signal.reason));
+  error.name = "AbortError";
+  return error;
 }

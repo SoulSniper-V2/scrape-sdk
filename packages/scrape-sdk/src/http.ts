@@ -1,4 +1,4 @@
-import { AuthError, RateLimitError, ScrapeError } from "./errors.js";
+import { AuthError, ProviderResponseError, RateLimitError, ScrapeError } from "./errors.js";
 
 export type FetchLike = typeof fetch;
 
@@ -37,7 +37,11 @@ export async function requestJson<T = unknown>(
   provider: string
 ): Promise<T> {
   const response = await request(fetchFn, url, init, provider);
-  return (await response.json()) as T;
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new ProviderResponseError(provider, "Provider returned invalid JSON");
+  }
 }
 
 export async function requestText(
@@ -69,9 +73,13 @@ export function mergeSignals(a?: AbortSignal, b?: AbortSignal): AbortSignal | un
     return AbortSignal.any([a, b]);
   }
   const controller = new AbortController();
-  const onAbort = () => controller.abort();
+  const onAbort = () => {
+    controller.abort(a.aborted ? a.reason : b.reason);
+    a.removeEventListener("abort", onAbort);
+    b.removeEventListener("abort", onAbort);
+  };
   if (a.aborted || b.aborted) {
-    controller.abort();
+    controller.abort(a.aborted ? a.reason : b.reason);
     return controller.signal;
   }
   a.addEventListener("abort", onAbort, { once: true });

@@ -47,6 +47,20 @@ export class CapabilityError extends ScrapeError {
   }
 }
 
+export class UnsupportedOptionError extends ScrapeError {
+  constructor(option: string, provider: string) {
+    super(`Provider does not support option ${option}`, provider, 400, false);
+    this.name = "UnsupportedOptionError";
+  }
+}
+
+export class ProviderResponseError extends ScrapeError {
+  constructor(provider: string, message: string) {
+    super(message, provider, undefined, false);
+    this.name = "ProviderResponseError";
+  }
+}
+
 export class InvalidUrlError extends ScrapeError {
   constructor(value: string) {
     super(`Invalid URL: ${value}`, "client", 400, false);
@@ -68,6 +82,21 @@ export class AllProvidersFailedError extends Error {
 export function isRetryableError(err: unknown): boolean {
   if (err instanceof ScrapeError) return err.isRetryable;
   if (err instanceof Error && err.name === "AbortError") return true;
+  if (err instanceof TypeError && /fetch failed|network|socket|connect|dns|timed out/i.test(err.message)) {
+    return true;
+  }
+  if (err instanceof Error) {
+    const code = (err as Error & { code?: unknown }).code;
+    if (
+      code === "ECONNRESET" ||
+      code === "ECONNREFUSED" ||
+      code === "ETIMEDOUT" ||
+      code === "ENOTFOUND" ||
+      code === "EAI_AGAIN"
+    ) {
+      return true;
+    }
+  }
   return false;
 }
 
