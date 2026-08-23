@@ -1,7 +1,7 @@
 import { ScrapeResult } from "./types.js";
 import { llmsTxtCandidates } from "./url.js";
 import { firstHeading } from "./heading.js";
-import { mergeSignals } from "./http.js";
+import { cleanupMergedSignal, mergeSignals } from "./http.js";
 
 const PROBE_MS = 1_500;
 
@@ -75,6 +75,7 @@ export async function tryLlmsTxt(
       if (options.signal && callerAbortHandler) {
         options.signal.removeEventListener("abort", callerAbortHandler);
       }
+      cleanupMergedSignal(merged);
       void operation.catch(() => undefined);
       void bodyOperation?.catch(() => undefined);
     }

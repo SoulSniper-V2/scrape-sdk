@@ -26,7 +26,7 @@ import {
   isRetryableError,
 } from "./errors.js";
 import { MemoryCache, cacheKey } from "./cache.js";
-import { mergeSignals, sleep } from "./http.js";
+import { cleanupMergedSignal, mergeSignals, sleep } from "./http.js";
 import { assertHttpUrl } from "./url.js";
 import { clipText } from "./clip.js";
 import { tryLlmsTxt } from "./llms-txt.js";
@@ -75,6 +75,7 @@ export class ScrapeClient {
       throw new Error("format:json requires a schema");
     }
     const startedAt = Date.now();
+    const deadlineAt = startedAt + this.timeoutMs;
     const cacheEnabled = Boolean(this.cache && !options?.headers);
     const key = cacheKey(url, {
       op: "scrape",
@@ -95,7 +96,7 @@ export class ScrapeClient {
       const llms = await tryLlmsTxt(url, this.fetchFn, {
         signal: options?.signal,
         headers: options?.headers,
-        timeoutMs: this.timeoutMs,
+        timeoutMs: remainingTimeout(this.timeoutMs, startedAt),
       });
       if (llms) {
         const clipped = applyClip(llms, options?.maxChars);
@@ -117,7 +118,8 @@ export class ScrapeClient {
         ),
       {
         signal: options?.signal,
-        timeoutMs: remainingTimeout(this.timeoutMs, startedAt),
+        timeoutMs: this.timeoutMs,
+        deadlineAt,
       }
     );
     const clipped = applyClip(result, options?.maxChars);
@@ -234,6 +236,7 @@ export class ScrapeClient {
     runOptions: RunOptions = {}
   ): Promise<T> {
     const timeoutMs = positiveFinite(runOptions.timeoutMs ?? this.timeoutMs, "timeoutMs");
+    const deadlineAt = runOptions.deadlineAt ?? Date.now() + timeoutMs;
     const callerSignal = runOptions.signal;
     if (callerSignal?.aborted) throw abortReason(callerSignal);
     const chain = this.candidates(needed);
@@ -247,6 +250,10 @@ export class ScrapeClient {
     for (let i = 0; i < chain.length; i++) {
       const provider = chain[i];
       for (let attempt = 0; attempt <= this.retries; attempt++) {
+        if (Date.now() >= deadlineAt) {
+          errors.push(new TimeoutError(provider.name, timeoutMs));
+          break;
+        }
         const controller = new AbortController();
         const signal = mergeSignals(callerSignal, controller.signal) as AbortSignal;
         let timedOut = false;
@@ -254,13 +261,14 @@ export class ScrapeClient {
         let callerAbortHandler: (() => void) | undefined;
         let timer: ReturnType<typeof setTimeout> | undefined;
         const operation = Promise.resolve().then(() => fn(provider, signal));
+        const attemptTimeoutMs = Math.max(1, deadlineAt - Date.now());
         const timeout = new Promise<T>((_, reject) => {
           timer = setTimeout(() => {
             timedOut = true;
             timeoutError = new TimeoutError(provider.name, timeoutMs);
             controller.abort(timeoutError);
             reject(timeoutError);
-          }, timeoutMs);
+          }, attemptTimeoutMs);
         });
         const callerAbort = callerSignal
           ? new Promise<T>((_, reject) => {
@@ -288,11 +296,20 @@ export class ScrapeClient {
           const retryable = isRetryableError(errors[errors.length - 1]);
           const hasAttemptsLeft = attempt < this.retries && retryable;
           if (hasAttemptsLeft) {
+            const remaining = deadlineAt - Date.now();
+            if (remaining <= 0) {
+              errors.push(new TimeoutError(provider.name, timeoutMs));
+              break;
+            }
             try {
-              await sleep(250 * (attempt + 1), callerSignal);
+              await sleep(Math.min(250 * (attempt + 1), remaining), callerSignal);
             } catch (sleepError: unknown) {
               if (callerSignal?.aborted) throw abortReason(callerSignal);
               throw sleepError;
+            }
+            if (Date.now() >= deadlineAt) {
+              errors.push(new TimeoutError(provider.name, timeoutMs));
+              break;
             }
             continue;
           }
@@ -308,9 +325,11 @@ export class ScrapeClient {
           if (callerSignal && callerAbortHandler) {
             callerSignal.removeEventListener("abort", callerAbortHandler);
           }
+          cleanupMergedSignal(signal);
           void operation.catch(() => undefined);
         }
       }
+      if (Date.now() >= deadlineAt) break;
     }
 
     throw new AllProvidersFailedError(errors);
@@ -320,6 +339,7 @@ export class ScrapeClient {
 interface RunOptions {
   timeoutMs?: number;
   signal?: AbortSignal;
+  deadlineAt?: number;
 }
 
 function resolveProviders(config: ScrapeClientConfig): ScrapeProvider[] {
@@ -344,7 +364,6 @@ function canUseLlmsTxt(options?: ScrapeOptions): boolean {
       !options?.schema &&
       !options?.includeLinks &&
       !options?.includeImages &&
-      !options?.headers &&
       !options?.waitForMs &&
       options?.onlyMainContent !== false
   );

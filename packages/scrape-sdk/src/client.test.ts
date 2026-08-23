@@ -268,6 +268,47 @@ describe("ScrapeClient", () => {
     assert.ok(Date.now() - startedAt < 50);
   });
 
+  it("uses one cumulative deadline across retries and fallback providers", async () => {
+    const startedAt = Date.now();
+    let primaryCalls = 0;
+    let fallbackCalls = 0;
+    const client = createScrapeClient({
+      timeoutMs: 320,
+      retries: 1,
+      provider: {
+        name: "deadline-primary",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => {
+          primaryCalls += 1;
+          if (primaryCalls === 1) throw new RateLimitError("deadline-primary");
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          return ok({ provider: "deadline-primary" });
+        },
+      },
+      fallback: {
+        name: "deadline-fallback",
+        capabilities: ["scrape"],
+        cost: 2,
+        scrape: async () => {
+          fallbackCalls += 1;
+          return ok({ provider: "deadline-fallback" });
+        },
+      },
+    });
+    await assert.rejects(
+      () => client.scrape("https://example.com", { preferLlmsTxt: false }),
+      (error: unknown) => {
+        assert.ok(error instanceof AllProvidersFailedError);
+        assert.ok(error.errors.some((entry) => entry instanceof TimeoutError));
+        return true;
+      }
+    );
+    assert.equal(primaryCalls, 2);
+    assert.equal(fallbackCalls, 0);
+    assert.ok(Date.now() - startedAt < 400);
+  });
+
   it("routes search only to providers that support it", async () => {
     const client = createScrapeClient({
       providers: [
@@ -546,6 +587,35 @@ describe("ScrapeClient", () => {
     assert.equal(result.provider, "text-provider");
     assert.equal(result.text, "Provider text");
     assert.equal(providerCalls, 1);
+  });
+
+  it("passes target-page headers to /llms.txt probes", async () => {
+    let providerCalls = 0;
+    const client = createScrapeClient({
+      fetch: (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+        assert.equal(href, "https://example.com/llms.txt");
+        assert.equal(new Headers(init?.headers).get("authorization"), "Bearer target");
+        return new Response("# Example\n\n- [Docs](https://example.com/docs)\n", {
+          status: 200,
+          headers: { "content-type": "text/plain" },
+        });
+      }) as typeof fetch,
+      provider: {
+        name: "header-llms-provider",
+        capabilities: ["scrape"],
+        cost: 1,
+        scrape: async () => {
+          providerCalls += 1;
+          return ok({ provider: "header-llms-provider" });
+        },
+      },
+    });
+    const result = await client.scrape("https://example.com", {
+      headers: { Authorization: "Bearer target" },
+    });
+    assert.equal(result.provider, "llms.txt");
+    assert.equal(providerCalls, 0);
   });
 
   it("does not swap an article URL for the site llms.txt", async () => {

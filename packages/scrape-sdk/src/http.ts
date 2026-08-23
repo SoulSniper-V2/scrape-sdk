@@ -73,10 +73,14 @@ export function mergeSignals(a?: AbortSignal, b?: AbortSignal): AbortSignal | un
     return AbortSignal.any([a, b]);
   }
   const controller = new AbortController();
-  const onAbort = () => {
-    controller.abort(a.aborted ? a.reason : b.reason);
+  const cleanup = () => {
     a.removeEventListener("abort", onAbort);
     b.removeEventListener("abort", onAbort);
+    mergedSignalCleanups.delete(controller.signal);
+  };
+  const onAbort = () => {
+    controller.abort(a.aborted ? a.reason : b.reason);
+    cleanup();
   };
   if (a.aborted || b.aborted) {
     controller.abort(a.aborted ? a.reason : b.reason);
@@ -84,7 +88,15 @@ export function mergeSignals(a?: AbortSignal, b?: AbortSignal): AbortSignal | un
   }
   a.addEventListener("abort", onAbort, { once: true });
   b.addEventListener("abort", onAbort, { once: true });
+  mergedSignalCleanups.set(controller.signal, cleanup);
   return controller.signal;
+}
+
+const mergedSignalCleanups = new WeakMap<AbortSignal, () => void>();
+
+export function cleanupMergedSignal(signal?: AbortSignal): void {
+  if (!signal) return;
+  mergedSignalCleanups.get(signal)?.();
 }
 
 export async function sleep(ms: number, signal?: AbortSignal): Promise<void> {
