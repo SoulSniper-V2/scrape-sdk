@@ -8,6 +8,7 @@ export interface ScrapeOptions {
   format?: OutputFormat;
   onlyMainContent?: boolean;
   waitForMs?: number;
+  /** Headers for the target page request, when the selected provider supports them. */
   headers?: Record<string, string>;
   includeLinks?: boolean;
   includeImages?: boolean;

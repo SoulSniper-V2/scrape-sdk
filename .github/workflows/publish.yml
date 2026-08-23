@@ -10,7 +10,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+      id-token: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -23,11 +24,60 @@ jobs:
 
       - name: Install Dependencies & Build
         run: |
-          npm install
-          cd packages/scrape-sdk
-          npm install
-          npm run build
-          npm test
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run check:versions
+          npm run typecheck --workspace=scrape-sdk
+          npm test --workspace=scrape-sdk
+          npm run build --workspace=scrape-sdk
+          npm run typecheck --workspace=scrape-sdk-mcp
+          npm run build --workspace=scrape-sdk-mcp
+          npm run test:security --workspace=scrape-sdk-web
+          npm run build --workspace=scrape-sdk-web
+          npm audit --omit=dev
+          npm pack --dry-run --workspace=scrape-sdk
+          npm pack --dry-run --workspace=scrape-sdk-mcp
+
+      - name: Smoke-test packed SDK and MCP artifacts
+        run: |
+          PACK_DIR="$RUNNER_TEMP/scrape-sdk-packs"
+          mkdir -p "$PACK_DIR"
+          npm pack --workspace=scrape-sdk --pack-destination "$PACK_DIR"
+          npm pack --workspace=scrape-sdk-mcp --pack-destination "$PACK_DIR"
+          SDK_TARBALL=$(find "$PACK_DIR" -maxdepth 1 -name 'scrape-sdk-[0-9]*.tgz' -print -quit)
+          MCP_TARBALL=$(find "$PACK_DIR" -maxdepth 1 -name 'scrape-sdk-mcp-*.tgz' -print -quit)
+          test -n "$SDK_TARBALL"
+          test -n "$MCP_TARBALL"
+          if tar -tzf "$SDK_TARBALL" | grep -E 'dist/.*\.test\.'; then
+            echo "Test artifacts must not be present in the SDK tarball"
+            exit 1
+          fi
+          SMOKE_DIR="$RUNNER_TEMP/scrape-sdk-smoke"
+          mkdir -p "$SMOKE_DIR"
+          cd "$SMOKE_DIR"
+          npm init -y >/dev/null
+          npm install --ignore-scripts --no-audit --no-fund "$SDK_TARBALL"
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import { createScrapeClient } from "scrape-sdk";
+
+          const client = createScrapeClient({
+            provider: {
+              name: "smoke",
+              capabilities: ["scrape"],
+              cost: 0,
+              scrape: async (url) => ({
+                url,
+                title: "smoke",
+                markdown: "# smoke",
+                metadata: {},
+                provider: "smoke",
+                latencyMs: 0,
+              }),
+            },
+          });
+          const result = await client.scrape("https://example.com", { preferLlmsTxt: false });
+          assert.equal(result.markdown, "# smoke");
+          NODE
 
       - name: Publish to npm
         run: |
@@ -41,14 +91,13 @@ jobs:
               echo "::notice ::${name}@${ver} already published. Skipping."
             else
               echo "Publishing ${name}@${ver}..."
-              npm publish --access public
+              npm publish --access public --provenance
             fi
           }
 
           cd packages/scrape-sdk
           publish_if_new .
           cd ../mcp-server
-          npm install
           NODE_OPTIONS=--max-old-space-size=4096 npm run build
           publish_if_new .
         env:

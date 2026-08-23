@@ -62,6 +62,12 @@ const scraper = createScrapeClient({
 
 Providers that cannot perform an operation are skipped. If none can, you get a `CapabilityError` instead of a fake result.
 
+## Behavior notes for 0.2.4
+
+- Client timeouts are cumulative across the `/llms.txt` probe, retries, and fallback providers.
+- `maxChars: 0` is a hard zero-character limit; non-empty output is marked `truncated`.
+- Unsupported adapter options now fail explicitly instead of silently degrading. Target-page `headers` and `format: "html"` can raise `UnsupportedOptionError` on adapters that cannot honor them.
+
 ## Methods
 
 | Method | Use when |

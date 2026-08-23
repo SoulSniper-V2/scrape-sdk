@@ -54,8 +54,7 @@ export function parseHtml(html: string, pageUrl: string, onlyMainContent = true)
   $(BOILERPLATE).remove();
 
   const mainHtml = onlyMainContent ? pickMainHtml($) : $("body").html() || $.html();
-  const $main = cheerio.load(mainHtml);
-  const text = $main("body").text().replace(/\s+/g, " ").trim() || $main.root().text().replace(/\s+/g, " ").trim();
+  const text = markdownToText(htmlToMarkdown(mainHtml));
 
   const links: string[] = [];
   const images: string[] = [];
@@ -96,6 +95,18 @@ export function htmlToMarkdown(html: string): string {
   return markdown
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
+export function markdownToText(markdown: string): string {
+  return markdown
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*>\s?/gm, "")
+    .replace(/[*_`~]/g, "")
+    .replace(/\n{2,}/g, "\n")
     .trim();
 }
 

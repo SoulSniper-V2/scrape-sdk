@@ -1,4 +1,4 @@
-import { AuthError, RateLimitError, ScrapeError } from "./errors.js";
+import { AuthError, ProviderResponseError, RateLimitError, ScrapeError } from "./errors.js";
 
 export type FetchLike = typeof fetch;
 
@@ -37,7 +37,11 @@ export async function requestJson<T = unknown>(
   provider: string
 ): Promise<T> {
   const response = await request(fetchFn, url, init, provider);
-  return (await response.json()) as T;
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new ProviderResponseError(provider, "Provider returned invalid JSON");
+  }
 }
 
 export async function requestText(
@@ -69,14 +73,30 @@ export function mergeSignals(a?: AbortSignal, b?: AbortSignal): AbortSignal | un
     return AbortSignal.any([a, b]);
   }
   const controller = new AbortController();
-  const onAbort = () => controller.abort();
+  const cleanup = () => {
+    a.removeEventListener("abort", onAbort);
+    b.removeEventListener("abort", onAbort);
+    mergedSignalCleanups.delete(controller.signal);
+  };
+  const onAbort = () => {
+    controller.abort(a.aborted ? a.reason : b.reason);
+    cleanup();
+  };
   if (a.aborted || b.aborted) {
-    controller.abort();
+    controller.abort(a.aborted ? a.reason : b.reason);
     return controller.signal;
   }
   a.addEventListener("abort", onAbort, { once: true });
   b.addEventListener("abort", onAbort, { once: true });
+  mergedSignalCleanups.set(controller.signal, cleanup);
   return controller.signal;
+}
+
+const mergedSignalCleanups = new WeakMap<AbortSignal, () => void>();
+
+export function cleanupMergedSignal(signal?: AbortSignal): void {
+  if (!signal) return;
+  mergedSignalCleanups.get(signal)?.();
 }
 
 export async function sleep(ms: number, signal?: AbortSignal): Promise<void> {

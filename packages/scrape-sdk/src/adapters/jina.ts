@@ -1,5 +1,7 @@
 import { AdapterHttp, ScrapeOptions, ScrapeProvider, ScrapeResult, SearchOptions, SearchResult } from "../types.js";
+import { ProviderResponseError, UnsupportedOptionError } from "../errors.js";
 import { jsonInit, request, requestJson } from "../http.js";
+import { markdownToText } from "../markdown.js";
 
 export interface JinaConfig extends Partial<AdapterHttp> {
   apiKey?: string;
@@ -38,8 +40,13 @@ export function jina(config: JinaConfig = {}): ScrapeProvider {
     capabilities: ["scrape", "search", "js"],
     cost: 10,
     async scrape(url: string, options?: ScrapeOptions): Promise<ScrapeResult> {
+      if (options?.headers) throw new UnsupportedOptionError("headers", "jina");
+      if (options?.format === "html") throw new UnsupportedOptionError("format:html", "jina");
+      if (options?.format === "json" && !options.schema) {
+        throw new UnsupportedOptionError("format:json", "jina");
+      }
       const startTime = Date.now();
-      const extra: Record<string, string> = { ...(options?.headers || {}) };
+      const extra: Record<string, string> = {};
       if (options?.onlyMainContent !== false) {
         extra["X-Target-Selector"] = "main, article, #content, [role='main']";
       }
@@ -53,7 +60,15 @@ export function jina(config: JinaConfig = {}): ScrapeProvider {
       const body = await response.text();
 
       if (contentType.includes("json")) {
-        const json = JSON.parse(body) as JinaJson;
+        let json: JinaJson;
+        try {
+          json = JSON.parse(body) as JinaJson;
+        } catch {
+          throw new ProviderResponseError("jina", "Jina returned invalid JSON");
+        }
+        if ((json.code !== undefined && json.code >= 400) || (json.status !== undefined && json.status >= 400)) {
+          throw new ProviderResponseError("jina", "Jina returned a failed response envelope");
+        }
         const data = json.data ?? {
           title: json.title,
           content: json.content,
@@ -63,6 +78,7 @@ export function jina(config: JinaConfig = {}): ScrapeProvider {
           url: data.url || url,
           title: data.title || titleFromMarkdown(markdown),
           markdown,
+          text: options?.format === "text" ? markdownToText(markdown) : undefined,
           links: normalizeLinks(data.links),
           images: data.images,
           metadata: {
@@ -78,6 +94,7 @@ export function jina(config: JinaConfig = {}): ScrapeProvider {
         url,
         title: titleFromMarkdown(body),
         markdown: body,
+        text: options?.format === "text" ? markdownToText(body) : undefined,
         metadata: { statusCode: 200 },
         provider: "jina",
         latencyMs: Date.now() - startTime,

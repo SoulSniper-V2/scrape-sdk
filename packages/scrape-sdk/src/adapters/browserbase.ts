@@ -6,8 +6,10 @@ import {
   ScrapeProvider,
   ScrapeResult,
 } from "../types.js";
+import { ProviderResponseError, UnsupportedOptionError } from "../errors.js";
 import { jsonInit, requestJson } from "../http.js";
 import { firstHeading } from "../heading.js";
+import { markdownToText } from "../markdown.js";
 
 export interface BrowserbaseConfig extends Partial<AdapterHttp> {
   apiKey: string;
@@ -16,10 +18,12 @@ export interface BrowserbaseConfig extends Partial<AdapterHttp> {
 }
 
 interface BrowserbaseFetchResponse {
+  success?: boolean;
   content?: string;
   statusCode?: number;
   contentType?: string;
   title?: string;
+  error?: string;
 }
 
 export function browserbase(config: BrowserbaseConfig): ScrapeProvider {
@@ -30,8 +34,13 @@ export function browserbase(config: BrowserbaseConfig): ScrapeProvider {
     capabilities: ["scrape", "extract"],
     cost: 40,
     async scrape(url: string, options?: ScrapeOptions): Promise<ScrapeResult> {
+      if (options?.headers) throw new UnsupportedOptionError("headers", "browserbase");
+      if (options?.format === "json" && !options.schema) {
+        throw new UnsupportedOptionError("format:json", "browserbase");
+      }
       const startTime = Date.now();
-      const format = options?.schema ? "json" : options?.format === "html" ? "raw" : "markdown";
+      const requestedFormat = options?.format ?? "markdown";
+      const format = options?.schema ? "json" : requestedFormat === "html" ? "raw" : "markdown";
       const json = await requestJson<BrowserbaseFetchResponse>(
         fetchFn,
         "https://api.browserbase.com/v1/fetch",
@@ -51,6 +60,12 @@ export function browserbase(config: BrowserbaseConfig): ScrapeProvider {
         "browserbase"
       );
 
+      if (json.success === false || json.error) {
+        throw new ProviderResponseError("browserbase", json.error || "Browserbase returned a failed response envelope");
+      }
+      if (typeof json.content !== "string") {
+        throw new ProviderResponseError("browserbase", "Browserbase returned no content");
+      }
       const content = json.content || "";
       return {
         url,
@@ -58,7 +73,7 @@ export function browserbase(config: BrowserbaseConfig): ScrapeProvider {
         markdown: format === "markdown" ? content : "",
         html: format === "raw" ? content : undefined,
         json: format === "json" ? tryParse(content) : undefined,
-        text: format === "raw" ? undefined : content,
+        text: requestedFormat === "text" ? markdownToText(content) : undefined,
         metadata: {
           statusCode: json.statusCode ?? 200,
           contentType: json.contentType,

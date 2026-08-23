@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "npm --prefix ../.. run build --workspace=scrape-sdk && next build",
+    "test:security": "tsc --target ES2022 --module NodeNext --moduleResolution NodeNext --lib ES2022,DOM --strict --esModuleInterop --skipLibCheck --outDir .security-dist src/app/api/scrape/security.ts src/app/api/scrape/security.test.ts && node --test .security-dist/security.test.js",
     "start": "next start"
   },
   "dependencies": {

@@ -24,6 +24,8 @@ scrape(url) // same chain, no client. Also search/map/crawl/extract/scrapeMany
 ### Methods
 
 - `scrape(url, options?)` — `maxChars` truncates markdown and sets `truncated` / `charCount`. Site/docs roots try `/llms.txt` first (`preferLlmsTxt`, default true). `failedOverFrom` lists providers that died before the winner.
+- Scrape options include `format: "markdown" | "html" | "text" | "json"`, `signal`, `waitForMs`, link/image inclusion, and target-page `headers` when the selected adapter supports them. Requests with target-page headers bypass the in-memory cache; unsupported options fail over or raise `UnsupportedOptionError`.
+- `maxChars` is a hard maximum for returned markdown/text, including the `[truncated]` marker.
 - `scrapeMany(urls, { concurrency?, ...scrapeOptions })`
 - `search(query, { limit?, includeAnswer?, includeRawContent? })`
 - `map(url, { limit?, search? })` — URL list without page bodies (Firecrawl)
@@ -31,3 +33,9 @@ scrape(url) // same chain, no client. Also search/map/crawl/extract/scrapeMany
 - `extract(url, { schema, prompt? })`
 - `supports(capability)` — `"scrape" | "search" | "crawl" | "extract" | "js" | "map"`
 - `listProviders()`
+
+### 0.2.4 behavior notes
+
+- The client timeout is cumulative across the `/llms.txt` probe, retries, and fallback providers.
+- `maxChars: 0` is a hard zero-character limit; non-empty output is marked `truncated`.
+- Unsupported adapter options now fail explicitly instead of silently degrading. In particular, target-page `headers` and `format: "html"` can raise `UnsupportedOptionError` on adapters that cannot honor them.

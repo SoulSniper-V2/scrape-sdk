@@ -11,6 +11,6 @@ export * from "./client.js";
 export * from "./from-env.js";
 export * from "./convenience.js";
 export { viaLine } from "./via.js";
-export { htmlToMarkdown, parseHtml } from "./markdown.js";
+export { htmlToMarkdown, markdownToText, parseHtml } from "./markdown.js";
 export { AGENT_MAX_CHARS, clipText } from "./clip.js";
 export { llmsTxtCandidates } from "./url.js";

@@ -1,6 +1,6 @@
 {
   "name": "scrape-sdk-mcp",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "MCP server for scrape-sdk — full-page scrape when host WebFetch only summarizes. Also map, crawl, extract.",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.2",
-    "scrape-sdk": "^0.2.2",
+    "scrape-sdk": "^0.2.4",
     "zod": "^3.25.76"
   },
   "devDependencies": {

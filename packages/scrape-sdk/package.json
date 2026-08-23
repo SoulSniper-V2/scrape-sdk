@@ -1,6 +1,6 @@
 {
   "name": "scrape-sdk",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "description": "TypeScript client to scrape URLs to markdown with failover across Firecrawl, Jina, Tavily, Spider, Browserbase, and local Cheerio",
   "type": "module",
   "main": "./dist/index.js",
@@ -51,9 +51,9 @@
     }
   },
   "scripts": {
-    "build": "tsc",
-    "test": "tsc && node --test dist/client.test.js dist/adapters.test.js dist/ai.test.js",
-    "typecheck": "tsc --noEmit"
+    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json",
+    "test": "tsc -p tsconfig.test.json && node --test .test-dist/client.test.js .test-dist/adapters.test.js .test-dist/ai.test.js",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json"
   },
   "keywords": [
     "scraper",
