@@ -7,7 +7,7 @@ import {
   SearchResult,
 } from "../types.js";
 import { jsonInit, requestJson } from "../http.js";
-import { ScrapeError } from "../errors.js";
+import { ProviderResponseError, UnsupportedOptionError } from "../errors.js";
 
 export interface TavilyConfig extends Partial<AdapterHttp> {
   apiKey: string;
@@ -22,8 +22,15 @@ export function tavily(config: TavilyConfig): ScrapeProvider {
     capabilities: ["scrape", "search"],
     cost: 20,
     async scrape(url: string, options?: ScrapeOptions): Promise<ScrapeResult> {
+      if (options?.headers) throw new UnsupportedOptionError("headers", "tavily");
+      if (options?.format === "html") throw new UnsupportedOptionError("format:html", "tavily");
+      if (options?.format === "json" && !options.schema) {
+        throw new UnsupportedOptionError("format:json", "tavily");
+      }
       const startTime = Date.now();
       const json = await requestJson<{
+        success?: boolean;
+        error?: string;
         results?: Array<{ url?: string; raw_content?: string; title?: string; images?: string[] }>;
         failed_results?: Array<{ url?: string; error?: string }>;
         usage?: { credits?: number };
@@ -46,11 +53,17 @@ export function tavily(config: TavilyConfig): ScrapeProvider {
       );
 
       const failed = json.failed_results?.[0];
-      if (failed) {
-        throw new ScrapeError(failed.error || "Tavily extract failed", "tavily");
+      if (json.success === false || failed || !json.results || json.results.length === 0) {
+        throw new ProviderResponseError(
+          "tavily",
+          failed?.error || json.error || "Tavily returned no extract result"
+        );
       }
 
       const item = json.results?.[0] || {};
+      if (typeof item.raw_content !== "string") {
+        throw new ProviderResponseError("tavily", "Tavily returned an empty extract result");
+      }
       const content = item.raw_content || "";
       return {
         url: item.url || url,

@@ -13,7 +13,8 @@ import {
   SearchResult,
 } from "../types.js";
 import { jsonInit, requestJson, sleep } from "../http.js";
-import { ScrapeError } from "../errors.js";
+import { ProviderResponseError, ScrapeError } from "../errors.js";
+import { markdownToText } from "../markdown.js";
 
 export interface FirecrawlConfig extends Partial<AdapterHttp> {
   apiKey: string;
@@ -35,6 +36,14 @@ interface FirecrawlDoc {
     statusCode?: number;
     ogImage?: string;
   };
+}
+
+interface FirecrawlCrawlStatus {
+  success?: boolean;
+  status?: string;
+  data?: FirecrawlDoc[];
+  next?: string | null;
+  error?: string;
 }
 
 export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
@@ -78,8 +87,11 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
         "firecrawl"
       );
 
-      const data = json.data || {};
-      return mapDoc(url, data, Date.now() - startTime);
+      if (json.success === false || !json.data || !hasDocumentContent(json.data)) {
+        throw new ProviderResponseError("firecrawl", json.error || "Firecrawl returned no scrape data");
+      }
+      const data = json.data;
+      return mapDoc(url, data, Date.now() - startTime, options?.format);
     },
 
     async search(query: string, options?: SearchOptions): Promise<SearchResult> {
@@ -87,6 +99,7 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
       const json = await requestJson<{
         success?: boolean;
         data?: { web?: Array<{ url?: string; title?: string; description?: string; markdown?: string }> } | Array<{ url?: string; title?: string; description?: string }>;
+        error?: string;
       }>(
         fetchFn,
         `${apiUrl}/search`,
@@ -103,7 +116,10 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
         "firecrawl"
       );
 
-      const rows = Array.isArray(json.data) ? json.data : json.data?.web || [];
+      if (json.success === false || json.data === undefined) {
+        throw new ProviderResponseError("firecrawl", json.error || "Firecrawl returned no search data");
+      }
+      const rows = Array.isArray(json.data) ? json.data : json.data.web || [];
       return {
         query,
         results: rows.map((row) => ({
@@ -132,7 +148,7 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
               includePaths: options?.matchPatterns,
               excludePaths: options?.excludePatterns,
               scrapeOptions: {
-                formats: ["markdown"],
+                formats: [options?.format === "html" ? "html" : "markdown"],
                 onlyMainContent: options?.onlyMainContent ?? true,
               },
             },
@@ -143,18 +159,16 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
         "firecrawl"
       );
 
+      if (started.success === false) {
+        throw new ProviderResponseError("firecrawl", started.error || "Firecrawl crawl failed to start");
+      }
       const jobId = started.id;
       if (!jobId) {
-        throw new ScrapeError(started.error || "Firecrawl crawl did not return a job id", "firecrawl");
+        throw new ProviderResponseError("firecrawl", started.error || "Firecrawl crawl did not return a job id");
       }
 
       const pollMs = options?.pollIntervalMs ?? 1500;
-      let statusJson: {
-        status?: string;
-        data?: FirecrawlDoc[];
-        next?: string | null;
-        error?: string;
-      } = {};
+      let statusJson: FirecrawlCrawlStatus = {};
 
       for (;;) {
         if (options?.signal?.aborted) throw options.signal.reason ?? new Error("Aborted");
@@ -164,6 +178,9 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
           { headers: auth, signal: options?.signal },
           "firecrawl"
         );
+        if (statusJson.success === false || statusJson.error) {
+          throw new ProviderResponseError("firecrawl", statusJson.error || "Firecrawl crawl status failed");
+        }
         if (statusJson.status === "completed" || statusJson.status === "failed") break;
         await sleep(pollMs, options?.signal);
       }
@@ -172,8 +189,25 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
         throw new ScrapeError(statusJson.error || "Firecrawl crawl failed", "firecrawl");
       }
 
-      const pages = (statusJson.data || []).map((doc) =>
-        mapDoc(String(doc.metadata?.sourceURL || url), doc, Date.now() - startTime)
+      const docs = [...(statusJson.data || [])];
+      let next = statusJson.next;
+      const pageLimit = options?.limit ?? 10;
+      while (next && docs.length < pageLimit) {
+        const page = await requestJson<FirecrawlCrawlStatus>(
+          fetchFn,
+          resolveNextPage(next, apiUrl),
+          { headers: auth, signal: options?.signal },
+          "firecrawl"
+        );
+        if (page.success === false || page.error) {
+          throw new ProviderResponseError("firecrawl", page.error || "Firecrawl crawl pagination failed");
+        }
+        docs.push(...(page.data || []));
+        next = page.next;
+      }
+
+      const pages = docs.slice(0, pageLimit).map((doc) =>
+        mapDoc(String(doc.metadata?.sourceURL || url), doc, Date.now() - startTime, options?.format)
       );
 
       return {
@@ -202,7 +236,11 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
 
     async map(url: string, options?: MapOptions): Promise<MapResult> {
       const startTime = Date.now();
-      const json = await requestJson<{ links?: Array<string | { url?: string }> }>(
+      const json = await requestJson<{
+        success?: boolean;
+        links?: Array<string | { url?: string }>;
+        error?: string;
+      }>(
         fetchFn,
         `${apiUrl}/map`,
         {
@@ -218,7 +256,10 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
         },
         "firecrawl"
       );
-      const links = (json.links || [])
+      if (json.success === false || json.links === undefined) {
+        throw new ProviderResponseError("firecrawl", json.error || "Firecrawl returned no map data");
+      }
+      const links = json.links
         .map((link) => (typeof link === "string" ? link : String(link.url || "")))
         .filter(Boolean);
       return {
@@ -231,13 +272,31 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
   };
 }
 
-function mapDoc(url: string, data: FirecrawlDoc, latencyMs: number): ScrapeResult {
+function resolveNextPage(next: string, apiUrl: string): string {
+  try {
+    return new URL(next, `${apiUrl}/`).href;
+  } catch {
+    throw new ProviderResponseError("firecrawl", "Firecrawl returned an invalid crawl pagination URL");
+  }
+}
+
+function mapDoc(
+  url: string,
+  data: FirecrawlDoc,
+  latencyMs: number,
+  format?: ScrapeOptions["format"]
+): ScrapeResult {
+  if (!hasDocumentContent(data)) {
+    throw new ProviderResponseError("firecrawl", "Firecrawl returned an empty document");
+  }
   const metadata = data.metadata || {};
+  const markdown = data.markdown || "";
   return {
     url: String(metadata.sourceURL || url),
     title: String(metadata.title || ""),
-    markdown: data.markdown || "",
+    markdown,
     html: data.html || data.rawHtml,
+    text: format === "text" ? markdownToText(markdown) : undefined,
     json: data.json,
     links: data.links,
     images: data.images,
@@ -251,4 +310,8 @@ function mapDoc(url: string, data: FirecrawlDoc, latencyMs: number): ScrapeResul
     provider: "firecrawl",
     latencyMs,
   };
+}
+
+function hasDocumentContent(data: FirecrawlDoc): boolean {
+  return data.markdown !== undefined || data.html !== undefined || data.rawHtml !== undefined || data.json !== undefined;
 }

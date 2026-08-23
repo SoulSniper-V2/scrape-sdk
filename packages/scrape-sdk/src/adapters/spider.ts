@@ -6,7 +6,9 @@ import {
   ScrapeProvider,
   ScrapeResult,
 } from "../types.js";
+import { UnsupportedOptionError, ProviderResponseError } from "../errors.js";
 import { jsonInit, requestJson } from "../http.js";
+import { markdownToText } from "../markdown.js";
 
 export interface SpiderConfig extends Partial<AdapterHttp> {
   apiKey: string;
@@ -30,6 +32,10 @@ export function spider(config: SpiderConfig): ScrapeProvider {
     capabilities: ["scrape", "crawl", "js"],
     cost: 30,
     async scrape(url: string, options?: ScrapeOptions): Promise<ScrapeResult> {
+      if (options?.headers) throw new UnsupportedOptionError("headers", "spider");
+      if (options?.format === "json" && !options.schema) {
+        throw new UnsupportedOptionError("format:json", "spider");
+      }
       const startTime = Date.now();
       const json = await requestJson<SpiderPage[] | SpiderPage>(
         fetchFn,
@@ -49,7 +55,8 @@ export function spider(config: SpiderConfig): ScrapeProvider {
         "spider"
       );
       const first = Array.isArray(json) ? json[0] : json;
-      return mapPage(url, first || {}, Date.now() - startTime);
+      if (first?.error) throw new ProviderResponseError("spider", first.error);
+      return mapPage(url, first || {}, Date.now() - startTime, options?.format);
     },
 
     async crawl(url: string, options?: CrawlOptions): Promise<CrawlResult> {
@@ -73,8 +80,11 @@ export function spider(config: SpiderConfig): ScrapeProvider {
         },
         "spider"
       );
+      if (!json || (Array.isArray(json) && json.length === 0)) {
+        throw new ProviderResponseError("spider", "Spider returned no crawl pages");
+      }
       const pages = (Array.isArray(json) ? json : [json]).map((page) =>
-        mapPage(page.url || url, page, Date.now() - startTime)
+        mapPage(page.url || url, page, Date.now() - startTime, options?.format)
       );
       return {
         baseUrl: url,
@@ -87,12 +97,23 @@ export function spider(config: SpiderConfig): ScrapeProvider {
   };
 }
 
-function mapPage(url: string, page: SpiderPage, latencyMs: number): ScrapeResult {
+function mapPage(
+  url: string,
+  page: SpiderPage,
+  latencyMs: number,
+  format?: ScrapeOptions["format"]
+): ScrapeResult {
+  if (page.error) throw new ProviderResponseError("spider", page.error);
+  if (page.content === undefined && page.html === undefined) {
+    throw new ProviderResponseError("spider", "Spider returned an empty page");
+  }
+  const markdown = page.content || "";
   return {
     url: page.url || url,
     title: page.title || "",
-    markdown: page.content || "",
-    html: page.html,
+    markdown,
+    html: format === "html" ? page.html || page.content : page.html,
+    text: format === "text" ? markdownToText(markdown) : undefined,
     metadata: { statusCode: page.status ?? 200 },
     provider: "spider",
     latencyMs,

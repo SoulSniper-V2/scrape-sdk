@@ -6,7 +6,7 @@ import { tavily } from "./adapters/tavily.js";
 import { browserbase } from "./adapters/browserbase.js";
 import { spider } from "./adapters/spider.js";
 import { local } from "./adapters/local.js";
-import { RateLimitError } from "./errors.js";
+import { ProviderResponseError, RateLimitError, UnsupportedOptionError } from "./errors.js";
 
 type Handler = (url: string, init?: RequestInit) => Promise<Response> | Response;
 
@@ -79,6 +79,51 @@ describe("Firecrawl v2 adapter", () => {
     assert.ok(polls >= 2);
   });
 
+  it("rejects a 2xx vendor failure envelope", async () => {
+    const provider = firecrawl({
+      apiKey: "fc-test",
+      fetch: mockFetch(async () => json({ success: false, error: "blocked by vendor" })),
+    });
+    await assert.rejects(
+      () => provider.scrape("https://example.com"),
+      (error: unknown) => {
+        assert.ok(error instanceof ProviderResponseError);
+        assert.match((error as Error).message, /blocked by vendor/);
+        return true;
+      }
+    );
+  });
+
+  it("follows crawl pagination links", async () => {
+    const requested: string[] = [];
+    const provider = firecrawl({
+      apiKey: "fc-test",
+      fetch: mockFetch(async (url) => {
+        requested.push(url);
+        if (url.endsWith("/crawl")) return json({ success: true, id: "job-2" });
+        if (url.endsWith("/crawl/job-2")) {
+          return json({
+            status: "completed",
+            data: [{ markdown: "# One", metadata: { sourceURL: "https://example.com/one" } }],
+            next: "https://api.firecrawl.dev/v2/crawl/job-2?page=2",
+          });
+        }
+        return json({
+          data: [{ markdown: "# Two", metadata: { sourceURL: "https://example.com/two" } }],
+          next: null,
+        });
+      }),
+    });
+    assert.ok(provider.crawl);
+    const result = await provider.crawl("https://example.com", { pollIntervalMs: 1, limit: 2 });
+    assert.equal(result.totalPages, 2);
+    assert.deepEqual(result.pages.map((page) => page.url), [
+      "https://example.com/one",
+      "https://example.com/two",
+    ]);
+    assert.ok(requested.some((url) => url.includes("page=2")));
+  });
+
   it("maps a site via POST /v2/map", async () => {
     const provider = firecrawl({
       apiKey: "fc-test",
@@ -120,6 +165,24 @@ describe("Jina adapter", () => {
       fetch: mockFetch(async () => new Response("slow down", { status: 429 })),
     });
     await assert.rejects(() => provider.scrape("https://example.com"), RateLimitError);
+  });
+
+  it("does not forward target-page credentials to Jina", async () => {
+    let called = false;
+    const provider = jina({
+      fetch: mockFetch(async () => {
+        called = true;
+        return json({ data: { content: "should not run" } });
+      }),
+    });
+    await assert.rejects(
+      () =>
+        provider.scrape("https://example.com", {
+          headers: { Authorization: "Bearer target-secret" },
+        }),
+      UnsupportedOptionError
+    );
+    assert.equal(called, false);
   });
 });
 

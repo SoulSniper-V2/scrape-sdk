@@ -6,6 +6,8 @@ import { jina } from "../adapters/jina.js";
 import { local } from "../adapters/local.js";
 import { firecrawl } from "../adapters/firecrawl.js";
 import { tavily } from "../adapters/tavily.js";
+import { spider } from "../adapters/spider.js";
+import { browserbase } from "../adapters/browserbase.js";
 import { viaLine } from "../via.js";
 
 function help(): void {
@@ -14,7 +16,7 @@ scrape-sdk — scrape a URL to markdown (real page, not a summary)
 
 Usage:
   npx scrape-sdk <url>
-  npx scrape-sdk scrape <url> [--format markdown|html|text] [--json] [--provider jina|local|firecrawl|tavily]
+  npx scrape-sdk scrape <url> [--format markdown|html|text] [--json] [--provider jina|local|firecrawl|tavily|spider|browserbase]
   npx scrape-sdk search <query> [--json]
   npx scrape-sdk crawl <url> [--limit 10] [--json]
   npx scrape-sdk map <url> [--limit 100] [--json]
@@ -44,7 +46,7 @@ async function main(): Promise<void> {
 
   try {
     if (command === "search") {
-      const query = rest.filter((a) => !a.startsWith("--") && a !== "jina" && a !== "local" && a !== "firecrawl" && a !== "tavily" && a !== "markdown" && a !== "html" && a !== "text").join(" ").trim();
+      const query = searchQuery(rest);
       if (!query) throw new Error("Provide a search query");
       const result = await client.search(query);
       if (!jsonOut) console.error(viaLine(result));
@@ -74,10 +76,13 @@ async function main(): Promise<void> {
     }
 
     const formatIdx = rest.indexOf("--format");
-    const format = (formatIdx !== -1 ? rest[formatIdx + 1] : "markdown") as "markdown" | "html" | "text";
+    const format = formatIdx !== -1 ? rest[formatIdx + 1] : "markdown";
+    if (format !== "markdown" && format !== "html" && format !== "text") {
+      throw new Error("--format must be markdown, html, or text");
+    }
     const result = await client.scrape(url, { format, onlyMainContent: true });
     if (!jsonOut) console.error(viaLine(result));
-    print(jsonOut ? result : result.markdown || result.text || result.html || "");
+    print(jsonOut ? result : selectedContent(result, format));
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`scrape-sdk: ${message}`);
@@ -102,7 +107,42 @@ function buildClient(args: string[]): ScrapeClient {
     if (!key) throw new Error("TAVILY_API_KEY is required for --provider tavily");
     return createScrapeClient({ provider: tavily({ apiKey: key }), fallback: [jina(), local()] });
   }
+  if (named === "spider") {
+    const key = process.env.SPIDER_API_KEY || process.env.SPIDER_KEY;
+    if (!key) throw new Error("SPIDER_API_KEY is required for --provider spider");
+    return createScrapeClient({ provider: spider({ apiKey: key }), fallback: [jina(), local()] });
+  }
+  if (named === "browserbase") {
+    const key = process.env.BROWSERBASE_API_KEY;
+    if (!key) throw new Error("BROWSERBASE_API_KEY is required for --provider browserbase");
+    return createScrapeClient({ provider: browserbase({ apiKey: key }), fallback: [jina(), local()] });
+  }
   throw new Error(`Unknown provider: ${named}`);
+}
+
+function searchQuery(args: string[]): string {
+  const values: string[] = [];
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    if (arg === "--json") continue;
+    if (arg === "--provider" || arg === "--format" || arg === "--limit") {
+      index += 1;
+      continue;
+    }
+    if (!arg.startsWith("--")) values.push(arg);
+  }
+  return values.join(" ").trim();
+}
+
+function selectedContent(
+  result: { markdown: string; text?: string; html?: string },
+  format: "markdown" | "html" | "text"
+): string {
+  const content = format === "html" ? result.html : format === "text" ? result.text : result.markdown;
+  if (content === undefined) {
+    throw new Error(`Provider did not return ${format} content`);
+  }
+  return content;
 }
 
 function print(value: unknown): void {
