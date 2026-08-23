@@ -33,3 +33,9 @@ scrape(url) // same chain, no client. Also search/map/crawl/extract/scrapeMany
 - `extract(url, { schema, prompt? })`
 - `supports(capability)` — `"scrape" | "search" | "crawl" | "extract" | "js" | "map"`
 - `listProviders()`
+
+### 0.2.4 behavior notes
+
+- The client timeout is cumulative across the `/llms.txt` probe, retries, and fallback providers.
+- `maxChars: 0` is a hard zero-character limit; non-empty output is marked `truncated`.
+- Unsupported adapter options now fail explicitly instead of silently degrading. In particular, target-page `headers` and `format: "html"` can raise `UnsupportedOptionError` on adapters that cannot honor them.
