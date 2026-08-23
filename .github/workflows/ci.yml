@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Validate versions
+        run: npm run check:versions
+
+      - name: Check and test SDK
+        run: |
+          npm run typecheck --workspace=scrape-sdk
+          npm test --workspace=scrape-sdk
+          npm run build --workspace=scrape-sdk
+
+      - name: Check and build MCP server
+        run: |
+          npm run typecheck --workspace=scrape-sdk-mcp
+          npm run build --workspace=scrape-sdk-mcp
+
+      - name: Test hosted endpoint security
+        run: npm run test:security --workspace=scrape-sdk-web
+
+      - name: Build web app
+        run: npm run build --workspace=scrape-sdk-web
