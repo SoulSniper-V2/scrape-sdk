@@ -4,7 +4,7 @@ export const PRODUCT_PREAMBLE = `# Scrape SDK
 
 > TypeScript client to scrape URLs to markdown with failover across Firecrawl, Jina, Tavily, Spider, Browserbase Fetch, and local Cheerio.
 
-Scrape SDK (npm: \`scrape-sdk\`) is a library you install into a TypeScript app. It is not a hosted scrape API. Call \`scrape(url)\` and swap adapters without rewriting callers — the same shape as Email SDK / Domain SDK.
+Scrape SDK (npm: \`scrape-sdk\`) is a resilient TypeScript library to extract clean Markdown from the web with automatic engine failover. Call \`scrape(url)\` and swap or layer adapters without rewriting callers.
 
 ## When to use Scrape SDK
 

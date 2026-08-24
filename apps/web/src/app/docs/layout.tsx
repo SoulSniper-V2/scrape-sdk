@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="domain-docs-shell">
+    <div className="scrape-docs-shell">
       <DocsLayout
         tree={source.getPageTree()}
         nav={{

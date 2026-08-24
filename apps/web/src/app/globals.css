@@ -65,7 +65,7 @@ body {
 }
 
 /* Fumadocs documentation shell tokens */
-.domain-docs-shell {
+.scrape-docs-shell {
   --color-fd-background: #090908;
   --color-fd-foreground: #f1efe8;
   --color-fd-muted: #11110f;
@@ -88,7 +88,7 @@ body {
   color-scheme: dark;
 }
 
-.domain-docs-shell article h1 {
+.scrape-docs-shell article h1 {
   color: #f4f3ef;
   font-family: "Iowan Old Style", Baskerville, "Times New Roman", serif;
   font-size: clamp(2.9rem, 5.4vw, 5.4rem);
