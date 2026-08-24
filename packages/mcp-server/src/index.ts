@@ -120,7 +120,7 @@ async function main(): Promise<void> {
       "Extract structured JSON from a page using a JSON Schema. Hosts do not ship this. Prefer over scrape_url when you need fields, not prose.",
       {
         url: z.string().url(),
-        schema: z.record(z.string(), z.unknown()),
+        schema: z.custom<Record<string, unknown>>((val) => typeof val === "object" && val !== null),
         prompt: z.string().optional(),
       },
       async ({ url, schema, prompt }) => {

@@ -9,6 +9,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--max-old-space-size=4096"
     permissions:
       contents: read
       id-token: write
@@ -98,7 +100,7 @@ jobs:
           cd packages/scrape-sdk
           publish_if_new .
           cd ../mcp-server
-          NODE_OPTIONS=--max-old-space-size=4096 npm run build
+          npm run build
           publish_if_new .
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
