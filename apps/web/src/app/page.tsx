@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useGSAP } from '@gsap/react';
@@ -13,13 +13,8 @@ import {
   ArrowRight, 
   Github, 
   Terminal, 
-  Zap, 
   RefreshCw, 
-  Layers, 
-  Globe, 
-  CheckCircle2, 
-  AlertCircle,
-  Bot
+  Bot,
 } from 'lucide-react';
 import { ScrapeLogo } from '@/components/scrape-logo';
 
@@ -28,18 +23,18 @@ if (typeof window !== 'undefined') {
 }
 
 const PROVIDERS = [
-  { id: 'firecrawl', name: 'Firecrawl', href: '/docs/providers#firecrawl' },
-  { id: 'jina', name: 'Jina Reader', href: '/docs/providers#jina' },
-  { id: 'tavily', name: 'Tavily Extract', href: '/docs/providers#tavily' },
-  { id: 'spider', name: 'Spider.cloud', href: '/docs/providers#spider' },
-  { id: 'browserbase', name: 'Browserbase', href: '/docs/providers#browserbase' },
-  { id: 'local', name: 'Local Cheerio', href: '/docs/providers#local' },
+  { id: 'firecrawl', name: 'Firecrawl', href: '/docs/providers/firecrawl' },
+  { id: 'jina', name: 'Jina Reader', href: '/docs/providers/jina' },
+  { id: 'tavily', name: 'Tavily Extract', href: '/docs/providers/tavily' },
+  { id: 'spider', name: 'Spider.cloud', href: '/docs/providers/spider' },
+  { id: 'browserbase', name: 'Browserbase', href: '/docs/providers/browserbase' },
+  { id: 'local', name: 'Local Cheerio', href: '/docs/providers/local' },
 ];
 
 const CODE_EXAMPLES = {
   quickstart: `import { scrape } from "scrape-sdk";
 
-const page = await scrape("https://stripe.com");
+const page = await scrape("https://stripe.com/docs");
 
 console.log(page.markdown);
 console.log(\`via \${page.provider} in \${page.latencyMs}ms\`);`,
@@ -54,12 +49,12 @@ const { text } = await generateText({
   model: "openai/gpt-5.4",
   tools: createTools(scraper),
   stopWhen: stepCountIs(6),
-  prompt: "Summarize top stories from https://news.ycombinator.com",
+  prompt: "Read https://news.ycombinator.com and summarize top discussions",
 });
 
 console.log(text);`,
 
-  mcp: `// MCP via official SDK — Claude Desktop, Cursor
+  mcp: `// MCP configuration for Claude Desktop & Cursor
 {
   "mcpServers": {
     "scrape-sdk": {
@@ -86,7 +81,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
 bunx scrape-sdk https://news.ycombinator.com
 
 # Pipe clean web markdown into an LLM or clipboard
-bunx scrape-sdk https://stripe.com | pbcopy`,
+bunx scrape-sdk https://stripe.com/pricing | pbcopy`,
 };
 
 export default function Home() {
@@ -128,23 +123,6 @@ export default function Home() {
         wordTimeline.to(word, { opacity: 1, duration: 0.15 }, index * 0.08);
       });
     }
-
-    // 3. Architecture Visual Scale on Scroll
-    gsap.fromTo(
-      '.architecture-visual',
-      { scale: 0.88, opacity: 0.35 },
-      {
-        scale: 1,
-        opacity: 1,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.architecture-section',
-          start: 'top 80%',
-          end: 'center 50%',
-          scrub: 1,
-        },
-      }
-    );
   }, { scope: root });
 
   const handleScrape = async (targetUrl = url, targetProvider = provider) => {
@@ -172,7 +150,7 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-    const copySkill = () => {
+  const copySkill = () => {
     navigator.clipboard.writeText('npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk');
     setSkillCopied(true);
     setTimeout(() => setSkillCopied(false), 2000);
@@ -197,7 +175,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
     setTimeout(() => setCodeCopied(false), 2000);
   };
 
-  const manifestoText = "Scrape the URL. Search if you need to. Fail over before the agent dies.";
+  const manifestoText = "Write one scrape call. Use the provider you have. Fail over quietly when an API goes down.";
 
   return (
     <main ref={root} className="min-h-screen bg-[#090908] text-[#f4f3ef] antialiased selection:bg-[#7ba2ff]/20 selection:text-[#7ba2ff]">
@@ -235,13 +213,13 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
       <section className="relative pt-24 pb-28 text-center overflow-hidden">
         <div className="relative z-10 px-6 max-w-[1240px] mx-auto">
           <h1 className="hero-reveal font-editorial text-[clamp(3.8rem,8vw,8rem)] font-normal leading-[0.9] tracking-[-0.065em] text-[#f4f3ef] max-w-4xl mx-auto">
-            <span>Web scraping,</span>
+            <span>Scrape the web.</span>
             <br />
-            <span>handled.</span>
+            <span>Switch providers.</span>
           </h1>
 
-          <p className="hero-reveal mt-8 max-w-[620px] mx-auto text-[#aaa9a2] text-[clamp(1rem,1.4vw,1.18rem)] leading-[1.65] tracking-[-0.018em]">
-            Add, search, crawl, extract, and convert pages to markdown with one TypeScript client.
+          <p className="hero-reveal mt-8 max-w-[640px] mx-auto text-[#dedcd4] text-[clamp(1.05rem,1.45vw,1.22rem)] leading-[1.6] tracking-[-0.015em] font-normal">
+            One TypeScript client to scrape, search, crawl, and extract clean markdown across 6 engines with automatic failover.
           </p>
 
           <div className="hero-reveal mt-10 flex flex-wrap items-center justify-center gap-3">
@@ -254,7 +232,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
             </Link>
             <button
               onClick={() => copyCommand('bun add scrape-sdk')}
-              className="inline-flex min-h-[48px] items-center justify-center gap-3 px-5 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-mono text-[12px] hover:translate-y-[-1px] transition-transform"
+              className="inline-flex min-h-[48px] items-center justify-center gap-3 px-5 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-mono text-[12px] hover:translate-y-[-1px] transition-transform cursor-pointer"
             >
               <span className="text-[#7ba2ff]">$</span>
               <code>bun add scrape-sdk</code>
@@ -265,7 +243,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
           <div className="hero-reveal mt-3 flex flex-wrap items-center justify-center gap-2.5">
             <button
               onClick={copySkill}
-              className="inline-flex min-h-[38px] items-center justify-center gap-2 px-4 rounded border border-[#2b2b27] bg-[#11110f]/80 backdrop-blur text-[#a09f97] hover:text-white hover:border-[#384c7a] font-mono text-[11.5px] transition-all"
+              className="inline-flex min-h-[38px] items-center justify-center gap-2 px-4 rounded border border-[#2b2b27] bg-[#11110f]/80 backdrop-blur text-[#a09f97] hover:text-white hover:border-[#384c7a] font-mono text-[11.5px] transition-all cursor-pointer"
             >
               <span className="text-[#7ba2ff]">npx skills add</span>
               <span className="text-[#dedcd4]">SoulSniper-V2/scrape-sdk</span>
@@ -273,7 +251,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
             </button>
             <button
               onClick={copyAgentPrompt}
-              className="inline-flex min-h-[38px] items-center justify-center gap-2 px-4 rounded border border-[#2b2b27] bg-[#11110f]/80 backdrop-blur text-[#d6d5ce] hover:text-white hover:border-[#7ba2ff]/50 text-[11.5px] font-medium transition-all"
+              className="inline-flex min-h-[38px] items-center justify-center gap-2 px-4 rounded border border-[#2b2b27] bg-[#11110f]/80 backdrop-blur text-[#d6d5ce] hover:text-white hover:border-[#7ba2ff]/50 text-[11.5px] font-medium transition-all cursor-pointer"
             >
               <Terminal className="w-3.5 h-3.5 text-[#7ba2ff]" />
               <span>{promptCopied ? 'Copied Prompt to Clipboard!' : 'Copy Prompt for Agent'}</span>
@@ -318,227 +296,183 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
         </p>
       </section>
 
-      {/* Bento Capability Grid */}
+      {/* Section 1: Core Code & Failover Pipeline (Side-by-Side) */}
       <section className="max-w-[1240px] mx-auto px-6 pb-28">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end mb-14">
           <div className="lg:col-span-8">
             <h2 className="font-editorial text-[clamp(2.6rem,4.4vw,4.4rem)] leading-[0.98] tracking-[-0.055em] text-[#f4f3ef]">
-              Everything your scraping flow needs. One API.
+              Write one scrape call. Run it through any adapter.
             </h2>
           </div>
           <div className="lg:col-span-4">
             <p className="text-[#a09f97] text-[15px] leading-[1.7]">
-              Scrape SDK keeps platform-specific APIs at the edge of your system and returns a clean markdown model your agent can consume directly.
+              Scrape SDK gives your application one typed client and one result shape across Firecrawl, Jina, Tavily, Spider, Browserbase, and local Cheerio.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-[1px] bg-[#2b2b27] border border-[#2b2b27] overflow-hidden rounded">
-          {/* Card 1: Code Window */}
-          <div className="lg:col-span-7 bg-[#11110f] p-0 flex flex-col justify-between">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Left: Code Window */}
+          <div className="lg:col-span-7 rounded border border-[#2b2b27] bg-[#11110f] overflow-hidden flex flex-col justify-between">
             <div className="h-12 border-b border-[#2b2b27] px-5 flex items-center justify-between text-xs font-mono text-[#6f6e68]">
-              <span>scrape.ts</span>
+              <span>src/scraper.ts</span>
               <span>TypeScript</span>
             </div>
             <pre className="p-8 font-mono text-[13px] leading-[1.85] text-[#dedcd4] overflow-x-auto">
-              <code>{`import { scrape } from "scrape-sdk";
+              <code>{`import { createScrapeClient } from "scrape-sdk";
+import { firecrawl } from "scrape-sdk/firecrawl";
+import { jina } from "scrape-sdk/jina";
+import { local } from "scrape-sdk/local";
 
-const page = await scrape("https://stripe.com");`}</code>
+const scraper = createScrapeClient({
+  providers: [
+    firecrawl({ apiKey: process.env.FIRECRAWL_KEY! }),
+    jina(),
+    local(),
+  ],
+});
+
+const page = await scraper.scrape("https://stripe.com/docs");
+console.log(page.markdown);`}</code>
             </pre>
-            <div className="p-6 border-t border-[#2b2b27] bg-[#141412]/40 text-xs text-[#8f8e87]">
-              Zero boilerplate. Seamless provider failover.
+            <div className="p-5 border-t border-[#2b2b27] bg-[#141412]/40 text-xs text-[#8f8e87] flex items-center justify-between">
+              <span>Automatic failover across providers</span>
+              <span className="font-mono text-[#92b6ff]">strategy: &quot;priority&quot;</span>
             </div>
           </div>
 
-          {/* Card 2: Status Ledger */}
-          <div className="lg:col-span-5 bg-[#11110f] p-8 flex flex-col justify-between">
-            <div className="border border-[#343430] bg-[#0d0d0c] divide-y divide-[#2c2c28] text-xs font-mono mb-8">
-              <div className="p-4 flex items-center justify-between">
-                <code className="text-[#dbd9d1]">stripe.com/pricing</code>
-                <span className="text-[#b8d78e] flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#b8d78e]" />
-                  ready
-                </span>
-              </div>
-              <div className="p-3.5 px-4 flex items-center justify-between text-[#8f8e87]">
-                <span>Primary (Firecrawl)</span>
-                <span className="text-amber-400">429 Rate Limit</span>
-              </div>
-              <div className="p-3.5 px-4 flex items-center justify-between text-[#8f8e87]">
-                <span>Failover Provider</span>
-                <span className="text-[#7ba2ff]">Jina Reader</span>
-              </div>
-              <div className="p-3.5 px-4 flex items-center justify-between text-[#8f8e87]">
-                <span>Extracted Tokens</span>
-                <span className="text-white font-semibold">1,840 tokens (124ms)</span>
-              </div>
-            </div>
+          {/* Right: The Failover & Readability Outcome */}
+          <div className="lg:col-span-5 rounded border border-[#2b2b27] bg-[#11110f] p-8 flex flex-col justify-between">
             <div>
-              <h3 className="text-xl font-normal tracking-[-0.035em] text-[#eceae3]">Honest failover</h3>
+              <div className="border border-[#343430] bg-[#0d0d0c] divide-y divide-[#2c2c28] text-xs font-mono mb-6">
+                <div className="p-4 flex items-center justify-between">
+                  <code className="text-[#dbd9d1]">stripe.com/pricing</code>
+                  <span className="text-[#b8d78e] flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#b8d78e]" />
+                    rescued (200 OK)
+                  </span>
+                </div>
+                <div className="p-3.5 px-4 flex items-center justify-between text-[#8f8e87]">
+                  <span>Primary (Firecrawl)</span>
+                  <span className="text-amber-400">429 Rate Limit</span>
+                </div>
+                <div className="p-3.5 px-4 flex items-center justify-between text-[#8f8e87]">
+                  <span>Failover (Jina Reader)</span>
+                  <span className="text-[#7ba2ff]">114ms</span>
+                </div>
+                <div className="p-3.5 px-4 flex items-center justify-between text-[#8f8e87]">
+                  <span>DOM Noise Reduction</span>
+                  <span className="text-white font-semibold">-96% (1,840 tokens)</span>
+                </div>
+              </div>
+
+              <h3 className="text-xl font-normal tracking-[-0.035em] text-[#eceae3]">Silent circuit recovery</h3>
               <p className="mt-2 text-sm text-[#8f8e87] leading-relaxed">
-                If your primary provider rate-limits or times out, Scrape SDK shifts to fallback providers before your agent crashes.
+                When a provider rate-limits or times out, Scrape SDK routes down your fallback list within a single deadline before throwing unhandled errors.
               </p>
             </div>
-          </div>
 
-          {/* Card 3: Adapter Swap */}
-          <div className="lg:col-span-4 bg-[#11110f] p-8 flex flex-col justify-between">
-            <h3 className="text-xl font-normal tracking-[-0.035em] text-[#eceae3]">
-              Change the adapter.<br />Keep the workflow.
-            </h3>
-            <div className="my-6 p-4 rounded bg-[#0d0d0c] border border-[#2b2b27] flex items-center justify-center gap-3 font-mono text-xs text-[#92b6ff]">
+            <div className="mt-6 pt-6 border-t border-[#22221f] flex items-center gap-3 text-xs font-mono text-[#92b6ff]">
               <code>firecrawl()</code>
               <ArrowRight className="w-4 h-4 text-[#6f6e68]" />
               <code>jina()</code>
-            </div>
-            <p className="text-xs text-[#8f8e87] leading-relaxed">
-              Standardized options and responses across all 6 scraping providers.
-            </p>
-          </div>
-
-          {/* Card 4: Clean Markdown Extraction */}
-          <div className="lg:col-span-8 bg-[#11110f] p-8 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-normal tracking-[-0.035em] text-[#eceae3]">Clean markdown your UI and agent can trust</h3>
-              <Link href="/docs/providers" className="text-xs text-[#92b6ff] hover:underline flex items-center gap-1">
-                Explore model <ArrowUpRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div className="space-y-2 border border-[#2b2b27] bg-[#0d0d0c] p-4 text-xs font-mono divide-y divide-[#1e1e1b]">
-              <div className="pb-2 flex justify-between">
-                <b className="text-[#7ba2ff]">MARKDOWN</b>
-                <code className="text-[#dbd9d1]"># Stripe Payment Intents API</code>
-                <span className="text-[#8f8e87]">clean ATX headers</span>
-              </div>
-              <div className="py-2 flex justify-between">
-                <b className="text-[#a855f7]">METADATA</b>
-                <code className="text-[#dbd9d1]">title, description, links</code>
-                <span className="text-[#8f8e87]">structured</span>
-              </div>
-              <div className="pt-2 flex justify-between">
-                <b className="text-emerald-400">ZERO BLOAT</b>
-                <code className="text-[#dbd9d1]">scripts & styles stripped</code>
-                <span className="text-[#8f8e87]">0 wasted tokens</span>
-              </div>
+              <ArrowRight className="w-4 h-4 text-[#6f6e68]" />
+              <code>local()</code>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Architecture Diagram Section */}
-      <section className="architecture-section max-w-[1240px] mx-auto px-6 pb-28">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-5 space-y-4">
-            <h2 className="font-editorial text-[clamp(2.4rem,4vw,3.8rem)] leading-[0.98] tracking-[-0.05em] text-[#f4f3ef]">
-              Your complete scraping workflow, already handled.
-            </h2>
-            <p className="text-[#a09f97] text-[15px] leading-relaxed">
-              Your application owns agent logic and orchestration. Scrape SDK talks to configured providers. The provider remains the source of truth.
-            </p>
-            <Link href="/docs/providers" className="inline-flex items-center gap-1.5 text-xs text-[#92b6ff] hover:underline font-medium">
-              Compare providers <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="architecture-visual lg:col-span-7 bg-[#11110f] border border-[#2b2b27] rounded p-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="w-full md:w-auto p-4 rounded bg-[#171715] border border-[#2b2b27] flex items-center gap-3">
-                <Bot className="w-5 h-5 text-[#7ba2ff]" />
-                <div>
-                  <span className="text-xs font-semibold text-white block">Your application</span>
-                  <span className="text-[11px] text-[#8f8e87]">agent rules + LLM prompt</span>
-                </div>
-              </div>
-
-              <div className="hidden md:flex items-center text-[#6f6e68]">
-                <ArrowRight className="w-5 h-5" />
-              </div>
-
-              <div className="w-full md:w-auto p-4 rounded bg-[#171715] border border-[#7ba2ff]/40 shadow-lg shadow-[#7ba2ff]/5 flex items-center gap-3">
-                <ScrapeLogo className="w-6 h-6" />
-                <div>
-                  <span className="text-xs font-semibold text-white block">Scrape SDK</span>
-                  <span className="text-[11px] text-[#8f8e87]">one typed contract</span>
-                </div>
-              </div>
-
-              <div className="hidden md:flex items-center text-[#6f6e68]">
-                <ArrowRight className="w-5 h-5" />
-              </div>
-
-              <div className="w-full md:w-auto flex flex-col gap-1.5">
-                {['Firecrawl', 'Jina Reader', 'Tavily', 'Local'].map((name) => (
-                  <div key={name} className="px-3 py-1.5 rounded bg-[#171715] border border-[#2b2b27] text-[11px] font-mono text-[#c3c1b9] flex items-center justify-between gap-3">
-                    <span>{name}</span>
-                    <ArrowUpRight className="w-3 h-3 text-[#6f6e68]" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Lifecycle 4-Cards */}
+      {/* Section 2: 5 Unified Capabilities (Bespoke Scrape SDK Architecture) */}
       <section className="max-w-[1240px] mx-auto px-6 pb-28">
         <div className="mb-14">
           <h2 className="font-editorial text-[clamp(2.4rem,4.2vw,4.2rem)] leading-[0.98] tracking-[-0.05em] text-[#f4f3ef]">
-            Everything needed for the lifecycle. Nothing pretending to be magic.
+            Five unified capabilities. Zero boilerplate.
           </h2>
+          <p className="mt-2 text-[#a09f97] text-[15px] max-w-2xl">
+            One client handles individual pages, search discovery, multi-page crawling, sitemap indexing, and structured JSON Schema extraction.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-6 rounded bg-[#11110f] border border-[#2b2b27] space-y-4">
-            <span className="text-xs font-mono text-[#6f6e68] uppercase tracking-wider block">01 / Add</span>
-            <div className="p-3 rounded bg-[#0d0d0c] border border-[#2b2b27] font-mono text-xs flex justify-between">
-              <code>app.target.com</code>
-              <span className="text-emerald-400">added</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* Op 1: Scrape */}
+          <div className="p-6 rounded border border-[#2b2b27] bg-[#11110f] space-y-4">
+            <div className="flex items-center justify-between font-mono text-xs text-[#6f6e68]">
+              <span className="text-white font-semibold">01 / scrape()</span>
+              <code className="text-[#92b6ff]">URL ➔ Markdown</code>
             </div>
-            <div>
-              <h3 className="text-base font-normal text-white">Attach a URL</h3>
-              <p className="text-xs text-[#8f8e87] mt-1 leading-relaxed">Validate once, pass custom headers, and safely execute across configured adapters.</p>
-            </div>
-          </div>
-
-          <div className="p-6 rounded bg-[#11110f] border border-[#2b2b27] space-y-4">
-            <span className="text-xs font-mono text-[#6f6e68] uppercase tracking-wider block">02 / Extract</span>
-            <div className="p-3 rounded bg-[#0d0d0c] border border-[#2b2b27] font-mono text-xs flex justify-between">
-              <b>MARKDOWN</b>
-              <span className="text-[#7ba2ff]">clean ATX</span>
-            </div>
-            <div>
-              <h3 className="text-base font-normal text-white">Return exact markdown</h3>
-              <p className="text-xs text-[#8f8e87] mt-1 leading-relaxed">Strip navigation, styles, and boilerplate. Give your agent token-efficient text.</p>
+            <h3 className="text-base font-normal text-white">Clean Page Markdown</h3>
+            <p className="text-xs text-[#8f8e87] leading-relaxed">
+              Converts web pages into clean ATX markdown, automatically stripping scripts, styles, navigation, and DOM bloat.
+            </p>
+            <div className="p-2.5 rounded bg-[#0d0d0c] border border-[#22221f] font-mono text-[11px] text-[#dbd9d1]">
+              <code>await scraper.scrape(&quot;https://stripe.com&quot;)</code>
             </div>
           </div>
 
-          <div className="p-6 rounded bg-[#11110f] border border-[#2b2b27] space-y-4">
-            <span className="text-xs font-mono text-[#6f6e68] uppercase tracking-wider block">03 / Failover</span>
-            <div className="p-3 rounded bg-[#0d0d0c] border border-[#2b2b27] font-mono text-xs flex justify-between">
-              <span>Primary 429</span>
-              <span className="text-amber-400">➔ Fallback</span>
+          {/* Op 2: Search */}
+          <div className="p-6 rounded border border-[#2b2b27] bg-[#11110f] space-y-4">
+            <div className="flex items-center justify-between font-mono text-xs text-[#6f6e68]">
+              <span className="text-white font-semibold">02 / search()</span>
+              <code className="text-[#92b6ff]">Query ➔ Pages</code>
             </div>
-            <div>
-              <h3 className="text-base font-normal text-white">Auto-recover</h3>
-              <p className="text-xs text-[#8f8e87] mt-1 leading-relaxed">Seamlessly route requests to backup providers if rate limits or timeouts occur.</p>
+            <h3 className="text-base font-normal text-white">Live Web Search</h3>
+            <p className="text-xs text-[#8f8e87] leading-relaxed">
+              Searches the live web without a starting URL, querying real-time provider indexes (Tavily, Jina) in one call.
+            </p>
+            <div className="p-2.5 rounded bg-[#0d0d0c] border border-[#22221f] font-mono text-[11px] text-[#dbd9d1]">
+              <code>await scraper.search(&quot;typescript web scraping&quot;)</code>
             </div>
           </div>
 
-          <div className="p-6 rounded bg-[#11110f] border border-[#2b2b27] space-y-4">
-            <span className="text-xs font-mono text-[#6f6e68] uppercase tracking-wider block">04 / Clean</span>
-            <div className="p-3 rounded bg-[#0d0d0c] border border-[#2b2b27] font-mono text-xs flex justify-between">
-              <code>Local fallback</code>
-              <span className="text-emerald-400">0 tokens</span>
+          {/* Op 3: Crawl */}
+          <div className="p-6 rounded border border-[#2b2b27] bg-[#11110f] space-y-4">
+            <div className="flex items-center justify-between font-mono text-xs text-[#6f6e68]">
+              <span className="text-white font-semibold">03 / crawl()</span>
+              <code className="text-[#92b6ff]">Domain ➔ Corpus</code>
             </div>
-            <div>
-              <h3 className="text-base font-normal text-white">Zero token waste</h3>
-              <p className="text-xs text-[#8f8e87] mt-1 leading-relaxed">Static Cheerio engine strips HTML clutter without consuming any external tokens.</p>
+            <h3 className="text-base font-normal text-white">Recursive Site Crawling</h3>
+            <p className="text-xs text-[#8f8e87] leading-relaxed">
+              Traverses entire domains recursively, managing depth bounds, concurrency limits, and async job polling.
+            </p>
+            <div className="p-2.5 rounded bg-[#0d0d0c] border border-[#22221f] font-mono text-[11px] text-[#dbd9d1]">
+              <code>await scraper.crawl(url, &#123; maxDepth: 2 &#125;)</code>
+            </div>
+          </div>
+
+          {/* Op 4: Map */}
+          <div className="p-6 rounded border border-[#2b2b27] bg-[#11110f] space-y-4">
+            <div className="flex items-center justify-between font-mono text-xs text-[#6f6e68]">
+              <span className="text-white font-semibold">04 / map()</span>
+              <code className="text-[#92b6ff]">Site ➔ URLs</code>
+            </div>
+            <h3 className="text-base font-normal text-white">Fast URL Discovery</h3>
+            <p className="text-xs text-[#8f8e87] leading-relaxed">
+              Discovers all URLs on a site, indexing sitemaps and paths fast without downloading full HTML bodies.
+            </p>
+            <div className="p-2.5 rounded bg-[#0d0d0c] border border-[#22221f] font-mono text-[11px] text-[#dbd9d1]">
+              <code>await scraper.map(url, &#123; limit: 100 &#125;)</code>
+            </div>
+          </div>
+
+          {/* Op 5: Extract JSON */}
+          <div className="p-6 rounded border border-[#2b2b27] bg-[#11110f] space-y-4 md:col-span-2 lg:col-span-2">
+            <div className="flex items-center justify-between font-mono text-xs text-[#6f6e68]">
+              <span className="text-white font-semibold">05 / extract()</span>
+              <code className="text-[#92b6ff]">Page ➔ Structured JSON</code>
+            </div>
+            <h3 className="text-base font-normal text-white">Structured JSON Schema Extraction</h3>
+            <p className="text-xs text-[#8f8e87] leading-relaxed">
+              Extracts type-safe structured JSON, validating extracted page fields against your Zod or JSON Schema.
+            </p>
+            <div className="p-2.5 rounded bg-[#0d0d0c] border border-[#22221f] font-mono text-[11px] text-[#dbd9d1]">
+              <code>await scraper.extract(url, &#123; schema: PricingSchema &#125;)</code>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Interactive Sandbox Section */}
+      {/* Section 3: Interactive Extraction Sandbox */}
       <section className="max-w-[1240px] mx-auto px-6 pb-28">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
@@ -558,7 +492,7 @@ const page = await scrape("https://stripe.com");`}</code>
                   setUrl(p.url);
                   handleScrape(p.url, provider);
                 }}
-                className="px-2.5 py-1 rounded bg-[#171715] border border-[#2b2b27] text-[#aaa9a2] hover:text-white hover:border-[#7ba2ff]/50 transition-all"
+                className="px-2.5 py-1 rounded bg-[#171715] border border-[#2b2b27] text-[#aaa9a2] hover:text-white hover:border-[#7ba2ff]/50 transition-all cursor-pointer"
               >
                 {p.label}
               </button>
@@ -574,6 +508,7 @@ const page = await scrape("https://stripe.com");`}</code>
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com"
+                suppressHydrationWarning
                 className="w-full px-4 py-2.5 rounded bg-[#0d0d0c] border border-[#2b2b27] text-white text-xs font-mono focus:outline-none focus:border-[#7ba2ff] transition-all"
               />
             </div>
@@ -589,7 +524,7 @@ const page = await scrape("https://stripe.com");`}</code>
               <button
                 onClick={() => handleScrape()}
                 disabled={loading || !url}
-                className="px-5 py-2.5 rounded bg-[#f4f3ef] text-[#090908] font-medium text-xs hover:bg-white disabled:opacity-50 transition-all flex items-center gap-2"
+                className="px-5 py-2.5 rounded bg-[#f4f3ef] text-[#090908] font-medium text-xs hover:bg-white disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer"
               >
                 {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <span>Extract</span>}
               </button>
@@ -616,7 +551,7 @@ const page = await scrape("https://stripe.com");`}</code>
                     navigator.clipboard.writeText(result.markdown);
                     alert('Markdown copied!');
                   }}
-                  className="hover:text-white transition-colors flex items-center gap-1"
+                  className="hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <Copy className="w-3 h-3" /> Copy
                 </button>
@@ -626,6 +561,57 @@ const page = await scrape("https://stripe.com");`}</code>
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Section 4: Single-Vendor SDK vs Scrape SDK */}
+      <section className="max-w-[1240px] mx-auto px-6 pb-28">
+        <div className="mb-14">
+          <h2 className="font-editorial text-[clamp(2.4rem,4vw,3.8rem)] leading-[0.98] tracking-[-0.05em] text-[#f4f3ef]">
+            Why developers switch from single-vendor SDKs
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-8 rounded border border-[#2b2b27] bg-[#11110f] space-y-5">
+            <span className="text-xs font-mono text-amber-400 uppercase tracking-wider block font-semibold">
+              Calling Vendor SDKs Directly
+            </span>
+            <ul className="space-y-3.5 text-xs text-[#a09f97] leading-relaxed">
+              <li className="flex items-start gap-2.5">
+                <span className="text-red-400 font-mono">✕</span>
+                <span><b>Vendor Lock-in:</b> Rewriting callers whenever you swap or add a new scraping service.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-red-400 font-mono">✕</span>
+                <span><b>Fragile Quotas:</b> Rate limits (429) or proxy outages immediately crash your backend.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-red-400 font-mono">✕</span>
+                <span><b>CI / Offline Failures:</b> Local tests and CI pipelines require active cloud SaaS API keys.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="p-8 rounded border border-[#3b4c7a] bg-[#11131a] space-y-5 shadow-lg shadow-[#7ba2ff]/5">
+            <span className="text-xs font-mono text-[#92b6ff] uppercase tracking-wider block font-semibold">
+              With Scrape SDK
+            </span>
+            <ul className="space-y-3.5 text-xs text-[#dedcd4] leading-relaxed">
+              <li className="flex items-start gap-2.5">
+                <span className="text-emerald-400 font-mono">✓</span>
+                <span><b>One Typed Contract:</b> Same function calls and result shapes across all 6 backends.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-emerald-400 font-mono">✓</span>
+                <span><b>Automatic Failover:</b> Seamlessly cascades down your fallback list within a single deadline.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="text-emerald-400 font-mono">✓</span>
+                <span><b>Free Local Fallback:</b> Static Cheerio parser runs anywhere with zero API keys required.</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </section>
 
@@ -648,7 +634,7 @@ const page = await scrape("https://stripe.com");`}</code>
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-4 py-3 text-xs font-mono transition-all ${
+                  className={`px-4 py-3 text-xs font-mono transition-all cursor-pointer ${
                     activeTab === tab.id
                       ? 'border-b-2 border-[#7ba2ff] text-white'
                       : 'text-[#8f8e87] hover:text-white'
@@ -660,7 +646,7 @@ const page = await scrape("https://stripe.com");`}</code>
             </div>
             <button
               onClick={copyCode}
-              className="text-xs text-[#8f8e87] hover:text-white font-mono flex items-center gap-1"
+              className="text-xs text-[#8f8e87] hover:text-white font-mono flex items-center gap-1 cursor-pointer"
             >
               {codeCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
               <span>{codeCopied ? 'Copied' : 'Copy code'}</span>
@@ -674,10 +660,15 @@ const page = await scrape("https://stripe.com");`}</code>
 
       {/* Closing CTA */}
       <section className="py-24 px-6 text-center border-t border-[#252522]">
-        <p className="text-xs font-mono text-[#7ba2ff] uppercase tracking-wider mb-3">Add the URL. Show the markdown. Never fail.</p>
-        <h2 className="font-editorial text-[clamp(2.8rem,5.5vw,5.5rem)] font-normal leading-[1.0] tracking-[-0.055em] text-[#f4f3ef] max-w-3xl mx-auto">
-          Ship web scraping without rebuilding the workflow.
+        <p className="text-xs font-mono text-[#7ba2ff] uppercase tracking-wider mb-3">UNIFIED WEB EXTRACTION FOR TYPESCRIPT</p>
+        <h2 className="font-editorial text-[clamp(2.8rem,5.5vw,5.5rem)] font-normal leading-[0.96] tracking-[-0.055em] text-[#f4f3ef] max-w-3xl mx-auto">
+          Never let a rate limit
+          <br />
+          crash your backend.
         </h2>
+        <p className="mt-6 text-[#a09f97] text-[15px] max-w-xl mx-auto leading-relaxed">
+          Add Scrape SDK in seconds. Switch engines or layer fallbacks without rewriting a single line of application code.
+        </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/docs/installation"
@@ -688,7 +679,7 @@ const page = await scrape("https://stripe.com");`}</code>
           </Link>
           <button
             onClick={copyAgentPrompt}
-            className="inline-flex min-h-[48px] items-center justify-center gap-2 px-6 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-medium text-[13px] hover:translate-y-[-1px] transition-transform"
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 px-6 rounded border border-[#3b3b37] bg-[#11110f] text-[#d4d2cb] font-medium text-[13px] hover:translate-y-[-1px] transition-transform cursor-pointer"
           >
             <Terminal className="w-3.5 h-3.5 text-[#7ba2ff]" />
             <span>{promptCopied ? 'Copied Prompt!' : 'Copy Agent Prompt'}</span>

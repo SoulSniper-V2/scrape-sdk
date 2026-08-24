@@ -135,9 +135,15 @@ async function fetchPinned(resolved: ResolvedPublicUrl, init: RequestInit): Prom
         port: resolved.url.port || undefined,
         path: `${resolved.url.pathname}${resolved.url.search}`,
         method: init.method || "GET",
-        headers: headerRecord,
-        lookup: (_hostname, _options, callback) => callback(null, resolved.address, resolved.family),
-        signal: init.signal ?? undefined,
+        lookup: (_hostname, options, callback) => {
+          const cb = typeof options === "function" ? options : callback;
+          const opts = typeof options === "object" && options !== null ? options : {};
+          if (opts.all) {
+            cb(null, [{ address: resolved.address, family: resolved.family }]);
+          } else {
+            cb(null, resolved.address, resolved.family);
+          }
+        },
       },
       (nodeResponse) => {
         const declaredLength = Number(nodeResponse.headers["content-length"]);

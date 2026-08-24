@@ -7,8 +7,8 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: 'Scrape SDK | Web scraping for agents, handled.',
-  description: 'Add, crawl, extract, and convert web pages to clean markdown across Firecrawl, Jina, Tavily, and Local Cheerio with one TypeScript API.',
+  title: 'Scrape SDK - Unified web scraping for TypeScript',
+  description: 'An open-source TypeScript SDK for unified web scraping and markdown extraction across Firecrawl, Jina, Tavily, Spider, Browserbase, and Local Cheerio. 6 engines. One typed client.',
 };
 
 export default function RootLayout({
