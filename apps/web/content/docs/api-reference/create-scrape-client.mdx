@@ -17,8 +17,8 @@ createScrapeClient({
 ```
 
 ```ts
-fromEnv() // builds providers from process.env keys, always ends with jina + local
-scrape(url) // same chain, no client. Also search/map/crawl/extract/scrapeMany
+fromEnv({ firecrawlKeyless?, tinyfishAgent? }) // builds providers from process.env keys, always ends with jina + local
+scrape(url) // same chain, no client. Also search/map/crawl/extract/agent/scrapeMany
 ```
 
 ### Methods
@@ -31,10 +31,11 @@ scrape(url) // same chain, no client. Also search/map/crawl/extract/scrapeMany
 - `map(url, { limit?, search? })` — URL list without page bodies (Firecrawl)
 - `crawl(url, { limit?, maxDepth?, pollIntervalMs?, maxChars?, ... })`
 - `extract(url, { schema, prompt? })`
-- `supports(capability)` — `"scrape" | "search" | "crawl" | "extract" | "js" | "map"`
+- `agent(url, { goal, schema?, maxSteps?, maxDurationSeconds?, browserProfile? })` — opt-in, potentially metered goal-based web automation.
+- `supports(capability)` — `"scrape" | "search" | "crawl" | "extract" | "js" | "map" | "agent"`
 - `listProviders()`
 
-### 0.2.4 behavior notes
+### 0.3.0 behavior notes
 
 - The client timeout is cumulative across the `/llms.txt` probe, retries, and fallback providers.
 - `maxChars: 0` is a hard zero-character limit; non-empty output is marked `truncated`.

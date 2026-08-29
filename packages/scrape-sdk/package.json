@@ -1,7 +1,7 @@
 {
   "name": "scrape-sdk",
-  "version": "0.2.4",
-  "description": "TypeScript client to scrape URLs to markdown with failover across Firecrawl, Jina, Tavily, Spider, Browserbase, and local Cheerio",
+  "version": "0.3.0",
+  "description": "TypeScript client to scrape URLs to markdown with failover across Firecrawl, TinyFish, Jina, Tavily, Spider, Browserbase, and local Cheerio",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -39,6 +39,11 @@
       "import": "./dist/adapters/browserbase.js",
       "default": "./dist/adapters/browserbase.js"
     },
+    "./tinyfish": {
+      "types": "./dist/adapters/tinyfish.d.ts",
+      "import": "./dist/adapters/tinyfish.js",
+      "default": "./dist/adapters/tinyfish.js"
+    },
     "./local": {
       "types": "./dist/adapters/local.d.ts",
       "import": "./dist/adapters/local.js",
@@ -52,7 +57,7 @@
   },
   "scripts": {
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json",
-    "test": "tsc -p tsconfig.test.json && node --test .test-dist/client.test.js .test-dist/adapters.test.js .test-dist/ai.test.js",
+    "test": "tsc -p tsconfig.test.json && node --test .test-dist/client.test.js .test-dist/adapters.test.js .test-dist/ai.test.js .test-dist/tinyfish.test.js .test-dist/firecrawl-keyless.test.js .test-dist/from-env.test.js",
     "typecheck": "tsc --noEmit -p tsconfig.test.json"
   },
   "keywords": [
@@ -61,6 +66,7 @@
     "crawler",
     "markdown",
     "firecrawl",
+    "tinyfish",
     "jina",
     "tavily",
     "ai-agents",

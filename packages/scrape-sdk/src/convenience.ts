@@ -2,6 +2,7 @@ import { ScrapeClient } from "./client.js";
 import { fromEnv } from "./from-env.js";
 import {
   BatchScrapeOptions,
+  AgentOptions,
   CrawlOptions,
   ExtractOptions,
   MapOptions,
@@ -47,4 +48,8 @@ export function crawl(url: string, options?: CrawlOptions) {
 
 export function extract(url: string, options: ExtractOptions) {
   return getDefaultClient().extract(url, options);
+}
+
+export function agent(url: string, options: AgentOptions) {
+  return getDefaultClient().agent(url, options);
 }

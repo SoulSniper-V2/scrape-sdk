@@ -1,6 +1,6 @@
 # scrape-sdk-mcp
 
-MCP server for [scrape-sdk](https://www.npmjs.com/package/scrape-sdk). Returns the **full page as markdown** (not a summary), with failover across Firecrawl, Jina, Tavily, Spider, Browserbase Fetch, and local Cheerio.
+MCP server for [scrape-sdk](https://www.npmjs.com/package/scrape-sdk). Returns the **full page as markdown** (not a summary), with failover across Firecrawl, TinyFish, Jina, Tavily, Spider, Browserbase Fetch, and local Cheerio.
 
 Host WebFetch in Cursor / Claude Code / Codex often summarizes. `scrape_url` does not.
 
@@ -22,6 +22,9 @@ This package depends on `scrape-sdk`. You do not install that separately when us
       "args": ["-y", "scrape-sdk-mcp"],
       "env": {
         "FIRECRAWL_API_KEY": "fc-...",
+        "FIRECRAWL_KEYLESS": "1",
+        "TINYFISH_API_KEY": "sk-tinyfish-...",
+        "TINYFISH_AGENT": "1",
         "TAVILY_API_KEY": "tvly-...",
         "JINA_API_KEY": "jina_..."
       }
@@ -30,17 +33,18 @@ This package depends on `scrape-sdk`. You do not install that separately when us
 }
 ```
 
-No keys required for a basic scrape (Jina + local). Paid keys unlock better engines and extra tools.
+No keys required for a basic scrape (Jina + local). Firecrawl Keyless is enabled with `FIRECRAWL_KEYLESS=1`. TinyFish Fetch/Search require `TINYFISH_API_KEY`; `TINYFISH_AGENT=1` additionally enables its metered goal-based Agent.
 
 ## Tools
 
 | Tool | When |
 | :--- | :--- |
 | `scrape_url` | Always. Full page markdown, default 20_000 chars. |
-| `search_web` | If `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` is set. |
+| `search_web` | If TinyFish, Tavily, Firecrawl, or another search provider is configured. |
 | `map_site` | If a configured provider supports map (Firecrawl). |
 | `crawl_site` | If a configured provider supports crawl. |
 | `extract_json` | If a configured provider supports extract. |
+| `run_web_agent` | If `TINYFISH_AGENT=1` enables the metered Agent surface. |
 
 ## App code
 

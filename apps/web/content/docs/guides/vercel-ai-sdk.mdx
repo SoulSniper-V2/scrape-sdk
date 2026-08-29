@@ -27,5 +27,6 @@ const { text } = await generateText({
 | `map_site` | List URLs on a site (Firecrawl). |
 | `crawl_site` | Many page bodies. Expensive; prefer map + scrape. |
 | `extract_json` | Structured fields via JSON Schema. |
+| `run_web_agent` | Opt-in goal-based browser automation; may consume paid provider credits. |
 
-Each tool uses Zod `inputSchema` (AI SDK 5/6). Search/map/crawl/extract are omitted when the client cannot do them.
+Each tool uses Zod `inputSchema` (AI SDK 5/6). Search/map/crawl/extract/agent are omitted when the client cannot do them.

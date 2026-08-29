@@ -1,0 +1,43 @@
+---
+title: TinyFish
+description: TinyFish Fetch, Search, and optional goal-based Agent adapter.
+---
+
+```ts
+import { tinyfish } from "scrape-sdk/tinyfish";
+
+const scraper = tinyfish({
+  apiKey: process.env.TINYFISH_API_KEY!,
+});
+```
+
+TinyFish uses separate REST surfaces for Fetch and Search. Fetch renders a URL and returns clean Markdown or HTML; Search returns structured ranked results. Both are free within the account limits (currently 150 URLs/minute for Fetch and 30 requests/minute for Search).
+
+```ts
+const page = await scraper.scrape("https://example.com");
+const hits = await scraper.search("web automation tools", {
+  location: "US",
+  language: "en",
+  purpose: "Find primary sources for an agent answer",
+});
+```
+
+The goal-based Agent surface is metered, so it is disabled by default. Enable it explicitly when the agent needs interaction or structured extraction from a multi-step flow:
+
+```ts
+const scraper = tinyfish({
+  apiKey: process.env.TINYFISH_API_KEY!,
+  enableAgent: true,
+});
+
+const result = await scraper.agent("https://example.com", {
+  goal: "Find the pricing page and return the first three plan names and prices.",
+  schema: {
+    type: "object",
+    properties: { plans: { type: "array" } },
+    required: ["plans"],
+  },
+});
+```
+
+`fromEnv({ tinyfishAgent: true })` enables the same paid surface. TinyFish does not provide native `map()` or `crawl()` in this adapter, and target-page headers, custom wait times, and `onlyMainContent: false` are rejected rather than silently ignored.

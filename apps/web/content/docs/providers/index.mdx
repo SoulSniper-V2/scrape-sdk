@@ -5,7 +5,8 @@ description: What each adapter calls, and what it can do.
 
 | Provider | scrape | search | map | crawl | extract | JS |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Firecrawl v2 | yes | yes | `/map` | polls job id | JSON format | yes |
+| Firecrawl v2 / Keyless | yes | yes | `/map` | polls job id | JSON format | yes |
+| TinyFish | Fetch | Search | no | no | Agent (opt-in) | rendered Fetch |
 | Jina | yes | yes | no | no | no | reader engine |
 | Tavily | `/extract` | `/search` | no | no | no | vendor |
 | Spider | `/scrape` | no | no | `/crawl` | no | `request: smart` |

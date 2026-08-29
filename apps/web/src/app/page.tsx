@@ -24,6 +24,7 @@ if (typeof window !== 'undefined') {
 
 const PROVIDERS = [
   { id: 'firecrawl', name: 'Firecrawl', href: '/docs/providers/firecrawl' },
+  { id: 'tinyfish', name: 'TinyFish', href: '/docs/providers/tinyfish' },
   { id: 'jina', name: 'Jina Reader', href: '/docs/providers/jina' },
   { id: 'tavily', name: 'Tavily Extract', href: '/docs/providers/tavily' },
   { id: 'spider', name: 'Spider.cloud', href: '/docs/providers/spider' },
@@ -61,7 +62,8 @@ console.log(text);`,
       "command": "npx",
       "args": ["-y", "scrape-sdk-mcp"],
       "env": {
-        "FIRECRAWL_API_KEY": "fc-...",
+        "FIRECRAWL_KEYLESS": "1",
+        "TINYFISH_API_KEY": "sk-tinyfish-...",
         "TAVILY_API_KEY": "tvly-..."
       }
     }
@@ -219,7 +221,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
           </h1>
 
           <p className="hero-reveal mt-8 max-w-[640px] mx-auto text-[#dedcd4] text-[clamp(1.05rem,1.45vw,1.22rem)] leading-[1.6] tracking-[-0.015em] font-normal">
-            One TypeScript client to scrape, search, crawl, and extract clean markdown across 6 engines with automatic failover.
+            One TypeScript client to scrape, search, crawl, extract, and automate across 7 engines with automatic failover.
           </p>
 
           <div className="hero-reveal mt-10 flex flex-wrap items-center justify-center gap-3">
@@ -306,7 +308,7 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
           </div>
           <div className="lg:col-span-4">
             <p className="text-[#a09f97] text-[15px] leading-[1.7]">
-              Scrape SDK gives your application one typed client and one result shape across Firecrawl, Jina, Tavily, Spider, Browserbase, and local Cheerio.
+              Scrape SDK gives your application one typed client and one result shape across Firecrawl, TinyFish, Jina, Tavily, Spider, Browserbase, and local Cheerio.
             </p>
           </div>
         </div>
@@ -321,12 +323,14 @@ Then use scrape-sdk whenever you need to fetch, crawl, or extract clean markdown
             <pre className="p-8 font-mono text-[13px] leading-[1.85] text-[#dedcd4] overflow-x-auto">
               <code>{`import { createScrapeClient } from "scrape-sdk";
 import { firecrawl } from "scrape-sdk/firecrawl";
+import { tinyfish } from "scrape-sdk/tinyfish";
 import { jina } from "scrape-sdk/jina";
 import { local } from "scrape-sdk/local";
 
 const scraper = createScrapeClient({
   providers: [
-    firecrawl({ apiKey: process.env.FIRECRAWL_KEY! }),
+    firecrawl({}),
+    tinyfish({ apiKey: process.env.TINYFISH_API_KEY! }),
     jina(),
     local(),
   ],
@@ -418,7 +422,7 @@ console.log(page.markdown);`}</code>
             </div>
             <h3 className="text-base font-normal text-white">Live Web Search</h3>
             <p className="text-xs text-[#8f8e87] leading-relaxed">
-              Searches the live web without a starting URL, querying real-time provider indexes (Tavily, Jina) in one call.
+              Searches the live web without a starting URL, querying real-time provider indexes (TinyFish, Tavily, Jina) in one call.
             </p>
             <div className="p-2.5 rounded bg-[#0d0d0c] border border-[#22221f] font-mono text-[11px] text-[#dbd9d1]">
               <code>await scraper.search(&quot;typescript web scraping&quot;)</code>
@@ -600,7 +604,7 @@ console.log(page.markdown);`}</code>
             <ul className="space-y-3.5 text-xs text-[#dedcd4] leading-relaxed">
               <li className="flex items-start gap-2.5">
                 <span className="text-emerald-400 font-mono">✓</span>
-                <span><b>One Typed Contract:</b> Same function calls and result shapes across all 6 backends.</span>
+                <span><b>One Typed Contract:</b> Same function calls and result shapes across all 7 backends.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="text-emerald-400 font-mono">✓</span>

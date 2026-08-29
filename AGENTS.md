@@ -1,6 +1,6 @@
 # scrape-sdk
 
-TypeScript client: scrape a URL to markdown with failover across Firecrawl, Jina, Tavily, Spider, Browserbase Fetch, and local Cheerio.
+TypeScript client: scrape a URL to markdown with failover across Firecrawl, TinyFish, Jina, Tavily, Spider, Browserbase Fetch, and local Cheerio.
 
 ## If you are writing app code
 

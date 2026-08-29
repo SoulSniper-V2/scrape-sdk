@@ -1,6 +1,6 @@
 ---
 title: Model Context Protocol
-description: Full-page scrape when host WebFetch only summarizes. Also map, crawl, extract.
+description: Full-page scrape when host WebFetch only summarizes. Also search, map, crawl, extract, and optional goal-based agents.
 ---
 
 Cursor, Claude Code, and Codex already have **WebSearch** — keep using it. Their **WebFetch** often **summarizes** the page (Claude Code uses Haiku). This server returns the actual markdown body, plus site map, crawl, and JSON extract.
@@ -13,6 +13,9 @@ Cursor, Claude Code, and Codex already have **WebSearch** — keep using it. The
       "args": ["-y", "scrape-sdk-mcp"],
       "env": {
         "FIRECRAWL_API_KEY": "fc-...",
+        "FIRECRAWL_KEYLESS": "1",
+        "TINYFISH_API_KEY": "sk-tinyfish-...",
+        "TINYFISH_AGENT": "1",
         "TAVILY_API_KEY": "tvly-...",
         "JINA_API_KEY": "jina_..."
       }
@@ -26,7 +29,8 @@ A copy lives at `examples/mcp.json`. The skill at `skills/scrape-sdk/` ships a s
 Tools:
 
 - `scrape_url` — always. Full page markdown, default 20_000 chars, `truncated` + `charCount` + `failedOverFrom`. Named so it does not collide with host `WebFetch`. Use this when you need the real page.
-- `search_web` — only if `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` is set. Otherwise use the host WebSearch.
+- `search_web` — when TinyFish, Tavily, Firecrawl, or another search provider is configured. Otherwise use the host WebSearch.
 - `map_site` / `crawl_site` / `extract_json` — when a configured provider supports them. Hosts do not ship these.
+- `run_web_agent` — only when `TINYFISH_AGENT=1`; this is a metered interactive operation.
 
-`fromEnv()` reads `FIRECRAWL_API_KEY` (or `FIRECRAWL_KEY`), `TAVILY_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `BROWSERBASE_API_KEY`.
+`fromEnv()` reads `FIRECRAWL_API_KEY` (or `FIRECRAWL_KEY`), `FIRECRAWL_KEYLESS=1`, `TINYFISH_API_KEY`, `TAVILY_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, and `BROWSERBASE_API_KEY`.

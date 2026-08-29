@@ -22,13 +22,14 @@ npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk
 | Subpath | What it is |
 | :--- | :--- |
 | `scrape-sdk` | `scrape`, `fromEnv`, `createScrapeClient`, types, errors |
-| `scrape-sdk/firecrawl` | Firecrawl **v2** adapter |
+| `scrape-sdk/firecrawl` | Firecrawl **v2 / Keyless** adapter |
+| `scrape-sdk/tinyfish` | TinyFish Fetch/Search + opt-in Agent adapter |
 | `scrape-sdk/jina` | Jina Reader + Search |
 | `scrape-sdk/tavily` | Tavily Extract + Search |
 | `scrape-sdk/spider` | Spider `/scrape` and `/crawl` |
 | `scrape-sdk/browserbase` | Browserbase **Fetch API** |
 | `scrape-sdk/local` | Cheerio + turndown |
-| `scrape-sdk/ai` | `createTools` → `scrape_url`, `search_web`, `map_site`, `crawl_site`, `extract_json` |
+| `scrape-sdk/ai` | `createTools` → `scrape_url`, `search_web`, `map_site`, `crawl_site`, `extract_json`, optional `run_web_agent` |
 
 MCP is a separate package: `npx scrape-sdk-mcp`.
 

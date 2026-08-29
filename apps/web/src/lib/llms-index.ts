@@ -2,14 +2,14 @@ import { docsIndexLines } from "@/lib/get-llm-text";
 
 export const PRODUCT_PREAMBLE = `# Scrape SDK
 
-> TypeScript client to scrape URLs to markdown with failover across Firecrawl, Jina, Tavily, Spider, Browserbase Fetch, and local Cheerio.
+> TypeScript client to scrape URLs to markdown with failover across Firecrawl, TinyFish, Jina, Tavily, Spider, Browserbase Fetch, and local Cheerio.
 
 Scrape SDK (npm: \`scrape-sdk\`) is a resilient TypeScript library to extract clean Markdown from the web with automatic engine failover. Call \`scrape(url)\` and swap or layer adapters without rewriting callers.
 
 ## When to use Scrape SDK
 
 - A TypeScript/Node/Bun app needs URL → markdown with one result shape.
-- You already have Firecrawl/Jina/Tavily keys and want failover when one 429s.
+- You already have Firecrawl/TinyFish/Jina/Tavily keys and want failover when one 429s.
 - CI needs a local Cheerio fallback with no SaaS key.
 
 ## When not to use it
@@ -30,13 +30,15 @@ Prefer these machine-readable routes instead of scraping HTML:
 
 Install: \`npm install scrape-sdk\` or \`npx skills add SoulSniper-V2/scrape-sdk --skill scrape-sdk\`.
 
-In app code, \`import { scrape } from "scrape-sdk"\` then \`await scrape(url)\`. MCP (\`npx -y scrape-sdk-mcp\`) \`scrape_url\` returns the real page — host WebFetch often summarizes. Prefer host WebSearch for ordinary lookup.
+In app code, \`import { scrape } from "scrape-sdk"\` then \`await scrape(url)\`. MCP (\`npx -y scrape-sdk-mcp\`) \`scrape_url\` returns the real page — host WebFetch often summarizes. Prefer host WebSearch for ordinary lookup. Goal-based interactive work is exposed separately as \`agent()\` / \`run_web_agent\` when explicitly enabled.
 
 ## Constraints
 
 - Server-side TypeScript only. Keep vendor keys in the environment.
 - Do not invent crawl/map results. Missing capability throws \`CapabilityError\`.
 - Firecrawl crawl \`POST /v2/crawl\` returns a job id; the adapter polls \`GET /crawl/{id}\`.
+- Firecrawl Keyless can be enabled with \`fromEnv({ firecrawlKeyless: true })\` or \`FIRECRAWL_KEYLESS=1\`.
+- TinyFish Fetch/Search are free within provider limits; its goal-based Agent is explicitly opt-in because it is metered.
 - Claude Code WebFetch summarizes pages. Use \`scrape_url\` / \`scrape()\` when you need the body.
 - Site and \`/docs\` roots try \`/llms.txt\` before HTML. Article URLs are scraped as-is.
 

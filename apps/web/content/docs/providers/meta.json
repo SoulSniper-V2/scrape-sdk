@@ -3,6 +3,7 @@
   "pages": [
     "index",
     "firecrawl",
+    "tinyfish",
     "jina",
     "tavily",
     "spider",

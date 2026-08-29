@@ -8,6 +8,7 @@ import { firecrawl } from "../adapters/firecrawl.js";
 import { tavily } from "../adapters/tavily.js";
 import { spider } from "../adapters/spider.js";
 import { browserbase } from "../adapters/browserbase.js";
+import { tinyfish } from "../adapters/tinyfish.js";
 import { viaLine } from "../via.js";
 
 function help(): void {
@@ -16,14 +17,16 @@ scrape-sdk — scrape a URL to markdown (real page, not a summary)
 
 Usage:
   npx scrape-sdk <url>
-  npx scrape-sdk scrape <url> [--format markdown|html|text] [--json] [--provider jina|local|firecrawl|tavily|spider|browserbase]
+  npx scrape-sdk scrape <url> [--format markdown|html|text] [--json] [--provider jina|local|firecrawl|tinyfish|tavily|spider|browserbase]
   npx scrape-sdk search <query> [--json]
   npx scrape-sdk crawl <url> [--limit 10] [--json]
   npx scrape-sdk map <url> [--limit 100] [--json]
+  npx scrape-sdk agent <url> <goal...> [--provider tinyfish] [--json]
   npx scrape-sdk mcp
 
 Works with no keys (Jina + local). Optional:
-  FIRECRAWL_API_KEY, TAVILY_API_KEY, JINA_API_KEY, SPIDER_API_KEY, BROWSERBASE_API_KEY
+  FIRECRAWL_API_KEY (or FIRECRAWL_KEYLESS=1), TINYFISH_API_KEY, TAVILY_API_KEY,
+  JINA_API_KEY, SPIDER_API_KEY, BROWSERBASE_API_KEY
 `);
 }
 
@@ -39,7 +42,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const command = ["scrape", "search", "crawl", "map"].includes(args[0]) ? args[0] : "scrape";
+  const command = ["scrape", "search", "crawl", "map", "agent"].includes(args[0]) ? args[0] : "scrape";
   const rest = command === args[0] ? args.slice(1) : args;
   const jsonOut = rest.includes("--json");
   const client = buildClient(rest);
@@ -51,6 +54,17 @@ async function main(): Promise<void> {
       const result = await client.search(query);
       if (!jsonOut) console.error(viaLine(result));
       print(jsonOut ? result : result.results.map((r) => `- ${r.title}\n  ${r.url}\n  ${r.snippet}`).join("\n\n") || "No results");
+      return;
+    }
+
+    if (command === "agent") {
+      const url = rest.find((a) => a.startsWith("http://") || a.startsWith("https://"));
+      const goal = agentGoal(rest);
+      if (!url) throw new Error("Provide a valid http(s) URL");
+      if (!goal) throw new Error("Provide an agent goal after the URL");
+      const result = await client.agent(url, { goal });
+      if (!jsonOut) console.error(viaLine(result));
+      print(jsonOut ? result : JSON.stringify(result.data ?? {}, null, 2));
       return;
     }
 
@@ -99,8 +113,18 @@ function buildClient(args: string[]): ScrapeClient {
   if (named === "jina") return createScrapeClient({ provider: jina({ apiKey: process.env.JINA_API_KEY }), fallback: local() });
   if (named === "firecrawl") {
     const key = process.env.FIRECRAWL_API_KEY || process.env.FIRECRAWL_KEY;
-    if (!key) throw new Error("FIRECRAWL_API_KEY is required for --provider firecrawl");
-    return createScrapeClient({ provider: firecrawl({ apiKey: key }), fallback: [jina(), local()] });
+    return createScrapeClient({
+      provider: firecrawl(key ? { apiKey: key } : {}),
+      fallback: [jina(), local()],
+    });
+  }
+  if (named === "tinyfish") {
+    const key = process.env.TINYFISH_API_KEY;
+    if (!key) throw new Error("TINYFISH_API_KEY is required for --provider tinyfish");
+    return createScrapeClient({
+      provider: tinyfish({ apiKey: key, enableAgent: process.env.TINYFISH_AGENT === "1" }),
+      fallback: [jina(), local()],
+    });
   }
   if (named === "tavily") {
     const key = process.env.TAVILY_API_KEY;
@@ -125,6 +149,20 @@ function searchQuery(args: string[]): string {
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === "--json") continue;
+    if (arg === "--provider" || arg === "--format" || arg === "--limit") {
+      index += 1;
+      continue;
+    }
+    if (!arg.startsWith("--")) values.push(arg);
+  }
+  return values.join(" ").trim();
+}
+
+function agentGoal(args: string[]): string {
+  const values: string[] = [];
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index];
+    if (arg === "--json" || arg.startsWith("http://") || arg.startsWith("https://")) continue;
     if (arg === "--provider" || arg === "--format" || arg === "--limit") {
       index += 1;
       continue;

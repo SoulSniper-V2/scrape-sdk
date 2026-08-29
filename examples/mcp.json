@@ -5,6 +5,9 @@
       "args": ["-y", "scrape-sdk-mcp"],
       "env": {
         "FIRECRAWL_API_KEY": "fc-...",
+        "FIRECRAWL_KEYLESS": "1",
+        "TINYFISH_API_KEY": "sk-tinyfish-...",
+        "TINYFISH_AGENT": "1",
         "TAVILY_API_KEY": "tvly-...",
         "JINA_API_KEY": "jina_..."
       }

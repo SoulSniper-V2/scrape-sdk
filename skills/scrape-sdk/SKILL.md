@@ -1,16 +1,16 @@
 ---
 name: scrape-sdk
-description: Return the real page as markdown (not a summary). Use scrape() / scrape_url when you need the full body, failover, crawl, map, or extract. Host WebFetch often summarizes. Prefer host WebSearch for ordinary lookup.
+description: Return the real page as markdown (not a summary). Use scrape() / scrape_url when you need the full body, failover, crawl, map, extract, or a goal-based web agent. Host WebFetch often summarizes. Prefer host WebSearch for ordinary lookup.
 license: MIT
-compatibility: Node.js 18+. Network access. Optional FIRECRAWL_API_KEY, TAVILY_API_KEY, JINA_API_KEY, SPIDER_API_KEY, BROWSERBASE_API_KEY.
+compatibility: Node.js 18+. Network access. Optional FIRECRAWL_API_KEY, FIRECRAWL_KEYLESS=1, TINYFISH_API_KEY, TINYFISH_AGENT=1, TAVILY_API_KEY, JINA_API_KEY, SPIDER_API_KEY, BROWSERBASE_API_KEY.
 metadata:
   author: Arush Wadhawan
-  version: "0.2.4"
+  version: "0.3.0"
 ---
 
 # Scrape SDK
 
-`scrape(url)` → markdown. Firecrawl / Jina / local failover without rewriting callers.
+`scrape(url)` → markdown. Firecrawl / TinyFish / Jina / local failover without rewriting callers.
 
 ## Coding agents (Cursor, Claude Code, Codex)
 
@@ -23,7 +23,7 @@ Host **WebSearch** is fine for lookup. Host **WebFetch** often summarizes the pa
 | Codex `web_search` | Default **cached** snippets | Live full page, crawl, or extract |
 | Host `WebSearch` | Titles + URLs | Keep using it; then `scrape_url` the hits |
 
-MCP: `npx -y scrape-sdk-mcp`. Tools: `scrape_url` / `map_site` / `crawl_site` / `extract_json`. `search_web` only if `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` is set.
+MCP: `npx -y scrape-sdk-mcp`. Tools: `scrape_url` / `search_web` / `map_site` / `crawl_site` / `extract_json`; `run_web_agent` is available only when `TINYFISH_AGENT=1` is set.
 
 ## App code
 
@@ -35,7 +35,7 @@ console.log(page.markdown);
 console.log(`via ${page.provider} in ${page.latencyMs}ms`);
 ```
 
-No keys required (Jina + local). Optional: `FIRECRAWL_API_KEY`, `TAVILY_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `BROWSERBASE_API_KEY`.
+No keys required (Jina + local). Optional: `FIRECRAWL_API_KEY`, `FIRECRAWL_KEYLESS=1`, `TINYFISH_API_KEY`, `TINYFISH_AGENT=1`, `TAVILY_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `BROWSERBASE_API_KEY`.
 
 A client is only needed when you pick providers yourself:
 
@@ -57,6 +57,7 @@ In-app agents (Vercel AI SDK) have no host WebSearch — `createTools(scraper)` 
 | Site URL list, not bodies | `map(url)` (Firecrawl) |
 | Many page bodies | `crawl(url)` last |
 | Fields, not prose | `extract(url, { schema })` |
+| Interactive multi-step task | `agent(url, { goal })` only when `TINYFISH_AGENT=1` is enabled |
 
 ## Install
 
@@ -79,6 +80,7 @@ Machine-readable (do not scrape HTML):
 | Adapter | API used |
 | :--- | :--- |
 | Firecrawl | `POST https://api.firecrawl.dev/v2/scrape`, `/search`, `/map`, `/crawl` then `GET /crawl/{id}` |
+| TinyFish | Fetch `POST https://api.fetch.tinyfish.ai`; Search `GET https://api.search.tinyfish.ai`; optional Agent `https://agent.tinyfish.ai/v1/automation/...` |
 | Jina | `GET https://r.jina.ai/{url}` `Accept: application/json`; search `POST https://s.jina.ai/` |
 | Tavily | `POST /extract` and `/search` with `Authorization: Bearer` |
 | Spider | `POST https://api.spider.cloud/scrape` and `/crawl` |

@@ -1,12 +1,14 @@
 ---
 title: Firecrawl
-description: Firecrawl API v2 — scrape, search, map, crawl with job polling, JSON extract.
+description: Firecrawl API v2 and Keyless free tier — scrape, search, map, crawl with job polling, JSON extract.
 ---
 
 ```ts
 import { firecrawl } from "scrape-sdk/firecrawl";
 
-firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY! })
+firecrawl({ apiKey: process.env.FIRECRAWL_API_KEY })
 ```
 
-Calls `https://api.firecrawl.dev/v2`. Map is `POST /map` (URL list, no bodies). Crawl `POST /crawl` returns `{ id }`; the adapter polls `GET /crawl/{id}` until `completed` or `failed`. Structured extract uses `formats: [{ type: "json", schema }]`.
+Calls `https://api.firecrawl.dev/v2`. The API key is optional for Firecrawl Keyless; `fromEnv({ firecrawlKeyless: true })` or `FIRECRAWL_KEYLESS=1` enables the no-key path explicitly. Firecrawl's free tier currently provides 1,000 credits per month, with two concurrent requests and low rate limits. Standard scrape, crawl, and map usage is one credit per page; search is two credits per ten results, and advanced features can cost more.
+
+Map is `POST /map` (URL list, no bodies). Crawl `POST /crawl` returns `{ id }`; the adapter polls `GET /crawl/{id}` until `completed` or `failed`. Structured extract uses `formats: [{ type: "json", schema }]`.

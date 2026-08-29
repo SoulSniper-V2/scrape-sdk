@@ -337,6 +337,33 @@ describe("ScrapeClient", () => {
     assert.equal(result.results[0].title, "Hit");
   });
 
+  it("routes goal-based agent calls only to providers that support them", async () => {
+    let calls = 0;
+    const client = createScrapeClient({
+      provider: {
+        name: "agent-provider",
+        capabilities: ["scrape", "agent"],
+        cost: 1,
+        costs: { agent: 10 },
+        scrape: async () => ok({ provider: "agent-provider" }),
+        agent: async (url, options) => {
+          calls += 1;
+          return {
+            url,
+            data: { goal: options.goal },
+            status: "completed",
+            provider: "agent-provider",
+            latencyMs: 2,
+          };
+        },
+      },
+    });
+    const result = await client.agent("https://example.com", { goal: "Read the page title" });
+    assert.equal(result.status, "completed");
+    assert.deepEqual(result.data, { goal: "Read the page title" });
+    assert.equal(calls, 1);
+  });
+
   it("throws CapabilityError when nobody can crawl", async () => {
     const client = createScrapeClient({
       provider: {
@@ -369,6 +396,44 @@ describe("ScrapeClient", () => {
     });
     const result = await client.scrape("https://example.com", { preferLlmsTxt: false });
     assert.equal(result.provider, "cheap");
+  });
+
+  it("uses per-capability costs when routing", async () => {
+    const client = createScrapeClient({
+      strategy: "cost",
+      providers: [
+        {
+          name: "paid-agent",
+          capabilities: ["scrape", "agent"],
+          cost: 0,
+          costs: { agent: 100 },
+          scrape: async () => ok({ provider: "paid-agent" }),
+          agent: async (url) => ({
+            url,
+            data: { source: "paid-agent" },
+            status: "completed",
+            provider: "paid-agent",
+            latencyMs: 1,
+          }),
+        },
+        {
+          name: "free-agent",
+          capabilities: ["scrape", "agent"],
+          cost: 20,
+          costs: { agent: 1 },
+          scrape: async () => ok({ provider: "free-agent" }),
+          agent: async (url) => ({
+            url,
+            data: { source: "free-agent" },
+            status: "completed",
+            provider: "free-agent",
+            latencyMs: 1,
+          }),
+        },
+      ],
+    });
+    const result = await client.agent("https://example.com", { goal: "Read the title" });
+    assert.deepEqual(result.data, { source: "free-agent" });
   });
 
   it("caches scrape results", async () => {

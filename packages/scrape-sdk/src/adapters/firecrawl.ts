@@ -17,7 +17,7 @@ import { ProviderResponseError, ScrapeError } from "../errors.js";
 import { markdownToText } from "../markdown.js";
 
 export interface FirecrawlConfig extends Partial<AdapterHttp> {
-  apiKey: string;
+  apiKey?: string;
   apiUrl?: string;
 }
 
@@ -35,6 +35,7 @@ interface FirecrawlDoc {
     sourceURL?: string;
     statusCode?: number;
     ogImage?: string;
+    creditsUsed?: number;
   };
 }
 
@@ -49,12 +50,24 @@ interface FirecrawlCrawlStatus {
 export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
   const apiUrl = (config.apiUrl || "https://api.firecrawl.dev/v2").replace(/\/$/, "");
   const fetchFn = config.fetch ?? globalThis.fetch.bind(globalThis);
-  const auth = { Authorization: `Bearer ${config.apiKey}` };
+  const auth = config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : undefined;
 
   return {
     name: "firecrawl",
     capabilities: ["scrape", "search", "crawl", "extract", "js", "map"],
     cost: 50,
+    ...(config.apiKey
+      ? {}
+      : {
+          costs: {
+            scrape: 0,
+            search: 0,
+            crawl: 0,
+            map: 0,
+            extract: 0,
+            js: 0,
+          },
+        }),
     async scrape(url: string, options?: ScrapeOptions): Promise<ScrapeResult> {
       const startTime = Date.now();
       const formats: unknown[] = [options?.format === "html" ? "html" : "markdown"];
@@ -79,6 +92,8 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
               onlyMainContent: options?.onlyMainContent ?? true,
               waitFor: options?.waitForMs,
               headers: options?.headers,
+              ...(options?.includeSelectors !== undefined ? { includeTags: options.includeSelectors } : {}),
+              ...(options?.excludeSelectors !== undefined ? { excludeTags: options.excludeSelectors } : {}),
             },
             auth
           ),
@@ -147,9 +162,14 @@ export function firecrawl(config: FirecrawlConfig): ScrapeProvider {
               allowSubdomains: options?.allowSubdomains ?? false,
               includePaths: options?.matchPatterns,
               excludePaths: options?.excludePatterns,
+              ...(options?.purpose ? { prompt: options.purpose } : {}),
               scrapeOptions: {
                 formats: [options?.format === "html" ? "html" : "markdown"],
                 onlyMainContent: options?.onlyMainContent ?? true,
+                waitFor: options?.waitForMs,
+                headers: options?.headers,
+                ...(options?.includeSelectors !== undefined ? { includeTags: options.includeSelectors } : {}),
+                ...(options?.excludeSelectors !== undefined ? { excludeTags: options.excludeSelectors } : {}),
               },
             },
             auth
@@ -314,6 +334,7 @@ function mapDoc(
     },
     provider: "firecrawl",
     latencyMs,
+    costCredits: typeof metadata.creditsUsed === "number" ? metadata.creditsUsed : undefined,
   };
 }
 

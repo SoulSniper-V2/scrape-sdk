@@ -40,6 +40,8 @@ const scraper = createScrapeClient({
 
 `provider` + `fallback` still works. Prefer `providers` for more than two backends.
 
+Set `FIRECRAWL_KEYLESS=1` or call `fromEnv({ firecrawlKeyless: true })` to opt into Firecrawl's no-key free surface. Set `TINYFISH_API_KEY` to add TinyFish Fetch/Search. TinyFish's metered goal-based Agent is opt-in with `fromEnv({ tinyfishAgent: true })`.
+
 ## 3. Search when you do not have a URL
 
 ```ts
@@ -71,5 +73,15 @@ const data = await scraper.extract("https://firecrawl.dev", {
     properties: { mission: { type: "string" } },
     required: ["mission"],
   },
+});
+```
+
+## 7. Run an interactive web agent
+
+Only clients configured with an agent-capable provider expose this operation. It may consume paid provider usage:
+
+```ts
+const agentResult = await scraper.agent("https://example.com", {
+  goal: "Find the pricing page and return the current plan names.",
 });
 ```

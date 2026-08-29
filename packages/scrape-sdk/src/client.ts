@@ -1,5 +1,7 @@
 import {
   BatchScrapeOptions,
+  AgentOptions,
+  AgentResult,
   CrawlOptions,
   CrawlResult,
   ExtractOptions,
@@ -82,8 +84,11 @@ export class ScrapeClient {
       format: options?.format,
       main: options?.onlyMainContent,
       wait: options?.waitForMs,
+      purpose: options?.purpose,
       links: options?.includeLinks,
       images: options?.includeImages,
+      includeSelectors: options?.includeSelectors,
+      excludeSelectors: options?.excludeSelectors,
       schema: options?.schema,
       prompt: options?.prompt,
       max: options?.maxChars,
@@ -222,10 +227,26 @@ export class ScrapeClient {
     );
   }
 
+  async agent(url: string, options: AgentOptions): Promise<AgentResult> {
+    assertHttpUrl(url);
+    if (!options?.goal?.trim()) throw new Error("agent requires a non-empty goal");
+    return this.run(
+      ["agent"],
+      (provider, signal) => {
+        if (!provider.agent) throw new CapabilityError("agent", provider.name);
+        return provider.agent(url, { ...options, signal });
+      },
+      { timeoutMs: this.timeoutMs * 4, signal: options.signal }
+    );
+  }
+
   private candidates(needed: ProviderCapability[]): ScrapeProvider[] {
     const matching = this.providers.filter((p) => needed.every((cap) => p.capabilities.includes(cap)));
     if (this.strategy === "cost") {
-      return [...matching].sort((a, b) => a.cost - b.cost);
+      const primaryCapability = needed[0];
+      return [...matching].sort(
+        (a, b) => providerCost(a, primaryCapability) - providerCost(b, primaryCapability)
+      );
     }
     return matching;
   }
@@ -425,7 +446,7 @@ function validateProvider(provider: ScrapeProvider): void {
   if (!Array.isArray(provider.capabilities) || provider.capabilities.length === 0) {
     throw new TypeError(`Provider ${provider.name} must declare at least one capability`);
   }
-  const capabilities = new Set<ProviderCapability>(["scrape", "search", "crawl", "extract", "js", "map"]);
+  const capabilities = new Set<ProviderCapability>(["scrape", "search", "crawl", "extract", "js", "map", "agent"]);
   for (const capability of provider.capabilities) {
     if (!capabilities.has(capability)) {
       throw new TypeError(`Provider ${provider.name} declares an unknown capability: ${String(capability)}`);
@@ -446,6 +467,9 @@ function validateProvider(provider: ScrapeProvider): void {
   if (provider.capabilities.includes("map") && typeof provider.map !== "function") {
     throw new TypeError(`Provider ${provider.name} advertises map but has no map method`);
   }
+  if (provider.capabilities.includes("agent") && typeof provider.agent !== "function") {
+    throw new TypeError(`Provider ${provider.name} advertises agent but has no agent method`);
+  }
   if (
     provider.capabilities.includes("extract") &&
     typeof provider.extract !== "function" &&
@@ -453,6 +477,11 @@ function validateProvider(provider: ScrapeProvider): void {
   ) {
     throw new TypeError(`Provider ${provider.name} advertises extract but has no extract or scrape method`);
   }
+}
+
+function providerCost(provider: ScrapeProvider, capability: ProviderCapability): number {
+  const cost = provider.costs?.[capability];
+  return cost === undefined ? provider.cost : cost;
 }
 
 function applyClip(result: ScrapeResult, maxChars?: number): ScrapeResult {

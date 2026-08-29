@@ -7,10 +7,10 @@
   <a href="https://x.com/be_arsh"><img alt="Follow @be_arsh on X" src="https://shieldcn.dev/x/follow/be_arsh.svg?variant=branded&mode=dark" /></a>
 </p>
 
-One TypeScript client for scraping URLs to markdown. Pick Firecrawl, Jina, Tavily, Spider, Browserbase, or local Cheerio, then fail over without rewriting callers.
+One TypeScript client for scraping URLs to markdown. Pick Firecrawl, TinyFish, Jina, Tavily, Spider, Browserbase, or local Cheerio, then fail over without rewriting callers.
 
-- Adapters against live vendor APIs: Firecrawl v2, Jina, Tavily, Spider.cloud, Browserbase Fetch, and Cheerio
-- `scrape(url)` is the verb. `map()`, `crawl()`, `extract()`, `search()`, and `scrapeMany()` when a provider can do them
+- Adapters against live vendor APIs: Firecrawl v2, TinyFish Fetch/Search/Agent, Jina, Tavily, Spider.cloud, Browserbase Fetch, and Cheerio
+- `scrape(url)` is the verb. `map()`, `crawl()`, `extract()`, `search()`, `agent()`, and `scrapeMany()` when a provider can do them
 - Abortable timeouts, retries on retryable errors, and automatic failover
 - Site/docs roots try `/llms.txt` before HTML
 - `fromEnv()` builds the client from the keys you already have
@@ -43,6 +43,12 @@ const scraper = fromEnv();
 const page = await scraper.scrape("https://stripe.com");
 ```
 
+Firecrawl Keyless is opt-in so a no-key upgrade does not silently change your network or free-quota usage:
+
+```ts
+const scraper = fromEnv({ firecrawlKeyless: true });
+```
+
 Or pick the order yourself:
 
 ```ts
@@ -62,7 +68,7 @@ const scraper = createScrapeClient({
 
 Providers that cannot perform an operation are skipped. If none can, you get a `CapabilityError` instead of a fake result.
 
-## Behavior notes for 0.2.4
+## Behavior notes for 0.3.0
 
 - Client timeouts are cumulative across the `/llms.txt` probe, retries, and fallback providers.
 - `maxChars: 0` is a hard zero-character limit; non-empty output is marked `truncated`.
@@ -78,19 +84,25 @@ Providers that cannot perform an operation are skipped. If none can, you get a `
 | `crawl(url)` | You need many page bodies from one site |
 | `extract(url, { schema })` | You need structured JSON |
 | `scrapeMany(urls)` | You have a list of URLs |
+| `agent(url, { goal })` | You need an interactive, multi-step web task |
 
 ## Providers
 
 | Provider | Import | Key | scrape | search | map | crawl | extract | JS |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Firecrawl v2 | `scrape-sdk/firecrawl` | yes | yes | yes | yes | yes | yes | yes |
+| Firecrawl v2 / Keyless | `scrape-sdk/firecrawl` | optional | yes | yes | yes | yes | yes | yes |
+| TinyFish Fetch/Search + Agent* | `scrape-sdk/tinyfish` | yes | yes | yes | — | — | Agent* | yes |
 | Jina | `scrape-sdk/jina` | optional | yes | yes | — | — | — | yes |
 | Tavily | `scrape-sdk/tavily` | yes | yes | yes | — | — | — | — |
 | Spider.cloud | `scrape-sdk/spider` | yes | yes | — | — | yes | — | yes |
 | Browserbase | `scrape-sdk/browserbase` | yes | yes | — | — | — | yes | — |
 | Local Cheerio | `scrape-sdk/local` | no | yes | — | — | — | — | no |
 
-Browserbase is `POST /v1/fetch`, not a Playwright session, so it does not run page JavaScript. Firecrawl crawl returns a job id; the adapter polls until it finishes.
+`Agent*` is available only when TinyFish is configured with `enableAgent: true`.
+
+TinyFish Fetch/Search are free within the provider's account limits. TinyFish Agent is opt-in because it is a metered goal-based browser run; configure `tinyfish({ apiKey, enableAgent: true })` or `fromEnv({ tinyfishAgent: true })`. TinyFish does not provide native `map()` or `crawl()` in this adapter.
+
+Firecrawl Keyless supports the no-key free surface; use `FIRECRAWL_KEYLESS=1` or `fromEnv({ firecrawlKeyless: true })`. Firecrawl crawl returns a job id; the adapter polls until it finishes. Browserbase is `POST /v1/fetch`, not a Playwright session, so it does not run page JavaScript.
 
 ## CLI
 
@@ -112,6 +124,9 @@ npx scrape-sdk scrape https://example.com --provider local
       "args": ["-y", "scrape-sdk-mcp"],
       "env": {
         "FIRECRAWL_API_KEY": "fc-...",
+        "FIRECRAWL_KEYLESS": "1",
+        "TINYFISH_API_KEY": "sk-tinyfish-...",
+        "TINYFISH_AGENT": "1",
         "TAVILY_API_KEY": "tvly-..."
       }
     }

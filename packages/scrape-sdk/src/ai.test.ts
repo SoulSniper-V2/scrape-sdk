@@ -68,4 +68,25 @@ describe("AI SDK tools", () => {
     assert.ok(tools.extract_json);
     assert.equal("web_fetch" in tools, false);
   });
+
+  it("exposes run_web_agent only for an agent-capable client", async () => {
+    const agentProvider: ScrapeProvider = {
+      ...mock,
+      capabilities: ["scrape", "search", "crawl", "extract", "map", "agent"],
+      agent: async (url, options) => ({
+        url,
+        data: { goal: options.goal },
+        status: "completed",
+        provider: "mock",
+        latencyMs: 1,
+      }),
+    };
+    const tools = createTools(createScrapeClient({ provider: agentProvider }));
+    assert.ok(tools.run_web_agent);
+    const result = await tools.run_web_agent.execute({
+      url: "https://example.com",
+      goal: "Read the title",
+    });
+    assert.deepEqual(result.data, { goal: "Read the title" });
+  });
 });
