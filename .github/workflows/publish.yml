@@ -2,9 +2,13 @@ name: Auto Publish to npm on Push
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "v*"
   workflow_dispatch:
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -16,13 +20,14 @@ jobs:
       id-token: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
 
       - name: Install Dependencies & Build
         run: |
@@ -93,7 +98,7 @@ jobs:
               echo "::notice ::${name}@${ver} already published. Skipping."
             else
               echo "Publishing ${name}@${ver}..."
-              npm publish --access public --provenance
+              npm publish --access public
             fi
           }
 
@@ -102,5 +107,3 @@ jobs:
           cd ../mcp-server
           npm run build
           publish_if_new .
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
